@@ -304,7 +304,7 @@ class Channel:
             self.f.flush()
             return json.loads(self.f.readline())
 
-    def cmd(self, line, expect_prefix=("OK", "FAIL")):
+    def cmd(self, line, expect_prefix=("OK", "FAIL", "ERR")):
         with self.lock:
             self.f.write((line + "\n").encode())
             self.f.flush()
