@@ -1,0 +1,143 @@
+--- a/configure
++++ b/configure
+@@ -967,7 +967,11 @@
+     fi
+ }
+ 
+-meson="$(cd pyvenv/bin; get_pwd)/meson"
++venv_bin=pyvenv/bin
++if test ! -d "$venv_bin" && test -d pyvenv/Scripts; then
++  venv_bin=pyvenv/Scripts
++fi
++meson="$(cd "$venv_bin"; get_pwd)/meson"
+ if [ -f "$meson$EXESUF" ]; then
+   meson="$meson$EXESUF"
+ fi
+--- a/hw/pci-host/designware.c
++++ b/hw/pci-host/designware.c
+@@ -225,9 +225,16 @@
+     DesignwarePCIEViewport *viewport = opaque;
+     DesignwarePCIERoot *root = viewport->root;
+ 
+-    const uint8_t busnum = DESIGNWARE_PCIE_ATU_BUS(viewport->target);
+-    const uint8_t devfn  = DESIGNWARE_PCIE_ATU_DEVFN(viewport->target);
+-    PCIBus    *pcibus    = pci_get_bus(PCI_DEVICE(root));
++    DesignwarePCIEHost *host = designware_pcie_root_to_host(root);
++    uint8_t busnum = DESIGNWARE_PCIE_ATU_BUS(viewport->target);
++    const uint8_t devfn = DESIGNWARE_PCIE_ATU_DEVFN(viewport->target);
++    PCIBus *pcibus = pci_get_bus(PCI_DEVICE(root));
++    /* Optional direct-link CFG0 convention: target zero addresses
++     * the downstream endpoint, not the root complex itself. */
++    if (host->direct_cfg0 && (viewport->cr[0] & 0x1f) == 4 && !busnum) {
++        pcibus = &PCI_BRIDGE(root)->sec_bus;
++        busnum = pci_bus_num(pcibus);
++    }
+     PCIDevice *pcidev    = pci_find_device(pcibus, busnum, devfn);
+ 
+     if (pcidev) {
+@@ -390,7 +397,8 @@
+ {
+     DesignwarePCIERoot *root = DESIGNWARE_PCIE_ROOT(dev);
+     DesignwarePCIEHost *host = designware_pcie_root_to_host(root);
+-    MemoryRegion *host_mem = get_system_memory();
++    MemoryRegion *host_mem = host->system_memory ?
++        host->system_memory : get_system_memory();
+     MemoryRegion *address_space = &host->pci.memory;
+     PCIBridge *br = PCI_BRIDGE(dev);
+     DesignwarePCIEViewport *viewport;
+@@ -454,7 +462,10 @@
+         viewport->limit   = UINT32_MAX;
+         viewport->cr[0]   = DESIGNWARE_PCIE_ATU_TYPE_MEM;
+ 
+-        destination = &host->pci.memory;
++        /* Fixed-link hosts use iATU as their outbound decoder,
++         * without an additional software-configured bridge window. */
++        destination = host->direct_cfg0 ? &br->address_space_mem :
++                                        &host->pci.memory;
+         direction   = "Outbound";
+         source      = host_mem;
+ 
+@@ -726,6 +737,12 @@
+     }
+ };
+ 
++static const Property designware_pcie_host_props[] = {
++    DEFINE_PROP_LINK("system-memory", DesignwarePCIEHost,
++                     system_memory, TYPE_MEMORY_REGION, MemoryRegion *),
++    DEFINE_PROP_BOOL("direct-cfg0", DesignwarePCIEHost, direct_cfg0, false),
++};
++
+ static void designware_pcie_host_class_init(ObjectClass *klass,
+                                             const void *data)
+ {
+@@ -736,6 +753,7 @@
+     dc->realize = designware_pcie_host_realize;
+     dc->fw_name = "pci";
+     dc->vmsd = &vmstate_designware_pcie_host;
++    device_class_set_props(dc, designware_pcie_host_props);
+ }
+ 
+ static void designware_pcie_host_init(Object *obj)
+--- a/include/hw/pci-host/designware.h
++++ b/include/hw/pci-host/designware.h
+@@ -96,6 +96,8 @@
+         qemu_irq     msi;
+     } pci;
+ 
++    MemoryRegion *system_memory;
++    bool direct_cfg0;
+     MemoryRegion mmio;
+ };
+ 
+--- a/scripts/symlink-install-tree.py
++++ b/scripts/symlink-install-tree.py
+@@ -7,6 +7,11 @@
+ import shlex
+ import subprocess
+ import sys
++
++# Host-only adaptation: direct binary runs do not need the optional install symlink tree.
++if os.name == "nt":
++    print("Skipping optional install symlink tree on native Windows")
++    sys.exit(0)
+ 
+ def destdir_join(d1: str, d2: str) -> str:
+     if not d1:
+--- a/target/arm/tcg/meson.build
++++ b/target/arm/tcg/meson.build
+@@ -86,7 +86,6 @@
+ 
+ arm_common_system_ss.add(files(
+   'cpregs-at.c',
+-  'gicv5-cpuif.c',
+   'psci.c',
+   'tlb_helper.c',
+   'tlb-insns.c',
+--- a/ui/ui-qmp-cmds.c
++++ b/ui/ui-qmp-cmds.c
+@@ -307,16 +307,17 @@
+     }
+ 
+     linebuf = qemu_pixman_linebuf_create(PIXMAN_BE_r8g8b8, width);
++    size_t stride = pixman_image_get_stride(linebuf);
++    g_autofree uint8_t *pixels = g_malloc_n(height, stride);
++
+     for (y = 0; y < height; y++) {
+         qemu_pixman_linebuf_fill(linebuf, image, width, 0, y);
+-        if (qio_channel_write_all(QIO_CHANNEL(ioc),
+-                                  (char *)pixman_image_get_data(linebuf),
+-                                  pixman_image_get_stride(linebuf), errp) < 0) {
+-            return false;
+-        }
+-    }
+-
+-    return true;
++        memcpy(pixels + (size_t)y * stride,
++               pixman_image_get_data(linebuf), stride);
++    }
++
++    return qio_channel_write_all(QIO_CHANNEL(ioc), pixels,
++                                 (size_t)height * stride, errp) >= 0;
+ }
+ 
+ /* Safety: coroutine-only, concurrent-coroutine safe, main thread only */
