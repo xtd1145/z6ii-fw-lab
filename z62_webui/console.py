@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WEBUI = ROOT / ".local" / "webui"
 INPUTS = WEBUI / "inputs"
 RUN = WEBUI / "run"
-QEMU = ROOT / "tools" / "src" / "qemu" / "build" / "qemu-system-arm.exe"
+QEMU = Path(os.environ.get("Z62_QEMU", str(ROOT / "runtime" / "qemu-system-arm.exe")))
 MSYS = ROOT / "tools" / "msys64"
 
 # Known-good C1.70 identities: reported, never enforced.
@@ -329,13 +329,24 @@ def extract_master(container):
     return info
 
 
+def connect_when_ready(port, timeout=15):
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            return socket.create_connection(("127.0.0.1", port), 2)
+        except ConnectionRefusedError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(.05)
+
+
 class Channel:
     """Line-oriented client shared by the qtest and QMP sockets."""
 
     def __init__(self, port, greeting=False):
-        self.s = socket.create_connection(("127.0.0.1", port), 5)
+        self.s = connect_when_ready(port)
         self.f = self.s.makefile("rwb")
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         if greeting:
             self.f.readline()
             self.send({"execute": "qmp_capabilities"})
@@ -364,7 +375,7 @@ class Channel:
 
 class Hmp:
     def __init__(self, port):
-        self.s = socket.create_connection(("127.0.0.1", port), 5)
+        self.s = connect_when_ready(port)
         self.s.settimeout(10)
         self.buf = b""
         self._prompt()
@@ -573,7 +584,7 @@ class Machine:
         The browser's 1 Hz poll drives this through GET /screen.png, so two
         requests can overlap; the lock also keeps the temporary PPM single-use.
         """
-        if not self.running() or self.profile == "z6ii":
+        if not self.running() or self.profile == "z6ii" or not self.qmp:
             return None
         with self._shot_lock:
             path = WEBUI / "screen.png"
@@ -606,7 +617,7 @@ class Machine:
             return path
 
     def gpu_counters(self):
-        if not self.running() or self.profile == "z6ii":
+        if not self.running() or self.profile == "z6ii" or not self.hmp:
             return {}
         out = {}
         for name in ("successful-uploads", "rendered-commands",
@@ -637,7 +648,7 @@ class Machine:
         advances as fast as the host executes it, so two 60-second runs are not
         comparable. This is the number that is.
         """
-        if not self.running() or self.profile == "z6ii":
+        if not self.running() or self.profile == "z6ii" or not self.hmp:
             return None
         text = self.hmp.cmd("xp/2xw 0x04266008")
         # The telnet monitor echoes the typed command back, so only trust lines
@@ -995,7 +1006,7 @@ label{font-size:12px;color:var(--dim);display:flex;gap:6px;align-items:center}
     </div>
     <div class="row"><label><input type="checkbox" id="mainscr">主屏实验开关（补齐实验室完成事件）</label></div>
     <div class="row"><label><input type="checkbox" id="logport" checked>日志端口 -D（配合 tracequeue 变体看 z62.qlog）</label></div>
-    <div class="row"><label><input type="checkbox" id="clearstatus" checked>清状态列表 0x1921（解锁菜单；否则 HUD 上盖 Error 框）</label></div>
+    <div class="row"><label><input type="checkbox" id="clearstatus" checked>实验：清除阻塞错误以进入菜单（仍需补齐真实外设）</label></div>
     <div class="row"><button class="primary" id="start">启动模拟器</button><button class="danger" id="stop">停止</button></div>
     <p class="note">按键经控制器 expander 注入：MENU=9 OK=3 ↑5 ↓4 ←7 →6。客体约 0.017× 实时，按住时长按墙钟算——0.25 秒只等于客体 4 毫秒，固件常常采样不到，建议 ≥2 秒。</p>
   </section>
