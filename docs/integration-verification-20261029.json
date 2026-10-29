@@ -1,0 +1,227 @@
+{
+  "base_repository": "https://github.com/xtd1145/z6ii-fw-lab",
+  "base_commit": "fc693ad51376e47fd2d5afcbc7da737673ffc781",
+  "native_qemu": "11.1.2",
+  "legacy_project_retained": "E:\\z62\\QEMU\\work\\z62-qemu",
+  "model_tests": [
+    {
+      "test": "nor-reset",
+      "returncode": 0,
+      "wall": 4.2
+    },
+    {
+      "test": "nor-persistence",
+      "returncode": 0,
+      "wall": 1.12
+    },
+    {
+      "test": "nvme-card",
+      "returncode": 0,
+      "wall": 0.62
+    },
+    {
+      "test": "nvme-empty",
+      "returncode": 0,
+      "wall": 0.59
+    },
+    {
+      "test": "audio-dma",
+      "returncode": 0,
+      "wall": 0.91
+    },
+    {
+      "test": "input-models",
+      "returncode": 0,
+      "wall": 2.55
+    }
+  ],
+  "nor_menu": {
+    "version": "2026-10-28-r3.1",
+    "action": "nor-menu",
+    "success": true,
+    "created_utc": "2026-10-29T11:25:11.990302+00:00",
+    "physical_camera_accessed": false,
+    "native_mas_nor_boot": true,
+    "menu_navigation": true,
+    "slave_runtime_fixture": true,
+    "full_dual_processor_cold_boot": false
+  },
+  "audio_trace": {
+    "version": "2026-10-28-r3.1",
+    "action": "shutter-preview",
+    "success": true,
+    "created_utc": "2026-10-29T11:34:53.556766+00:00",
+    "physical_camera_accessed": false,
+    "guest_auto_preview_diagnostic": true,
+    "counts_completed_bytes_failed": [
+      1,
+      38400,
+      0
+    ],
+    "pcm_exact_match": true,
+    "native_completion_callbacks": true,
+    "physical_shutter_trigger": false,
+    "native_ui_preview": false,
+    "full_dual_processor_cold_boot": false,
+    "owned_server_stopped": true
+  },
+  "audio_no_trace_retest": {
+    "version": "2026-10-28-r3.1",
+    "action": "shutter-preview",
+    "success": true,
+    "created_utc": "2026-10-29T11:40:53.151865+00:00",
+    "physical_camera_accessed": false,
+    "guest_auto_preview_diagnostic": true,
+    "counts_completed_bytes_failed": [
+      1,
+      38400,
+      0
+    ],
+    "pcm_exact_match": true,
+    "native_completion_callbacks": true,
+    "physical_shutter_trigger": false,
+    "native_ui_preview": false,
+    "full_dual_processor_cold_boot": false,
+    "owned_server_stopped": true
+  },
+  "raw_commit_original_result": {
+    "action": "unlock",
+    "profile": "Z6II/Z7II C1.70 static-analysis",
+    "activation_attempted": true,
+    "commit_attempted": true,
+    "commit_acknowledged": true,
+    "success": false,
+    "user_reported_reboot": false,
+    "cold_boot_verified": false,
+    "identity": {
+      "manufacturer": "Nikon Corporation",
+      "model": "Z 6_2",
+      "version": "V1.70",
+      "serial": "REDACTED"
+    },
+    "initial_state": {
+      "raw_authorized": 0,
+      "raw_status": 0
+    },
+    "error": "Nikon command failed: [8211, 0, 0, 0, 0]; 200F=key missing, A001=key/check failed",
+    "error_notes": [],
+    "note": "No write retry or rollback performed. Inspect transactions before retrying; partial RAM changes or a completed commit may exist."
+  },
+  "fresh_readonly_verify": {
+    "created_utc": "2026-10-29T11:48:58.100627+00:00",
+    "action": "verify",
+    "input_nor": "E:\\z62\\QEMU\\work\\z6ii-fw-lab\\.local\\integration-20261029\\input-r31\\runs-unlock\\20261029_193831_unlock_d353a8\\private-nor.raw",
+    "private_nor": "E:\\z62\\QEMU\\work\\z6ii-fw-lab\\.local\\integration-20261029\\input-r31\\runs-unlock\\20261029_194858_verify_88d37a\\private-nor.raw",
+    "layer": "original ROM callbacks; USB/session observers bypassed",
+    "laboratory_pcie_transfer_ready": true,
+    "transaction_gap_ms": 20,
+    "physical_camera_accessed": false,
+    "write_retry": false,
+    "stages": [
+      {
+        "action": "verify",
+        "session": "E:\\z62\\QEMU\\work\\z6ii-fw-lab\\.local\\integration-20261029\\input-r31\\runs-unlock\\20261029_194858_verify_88d37a\\session1",
+        "upstream_result": {
+          "action": "verify",
+          "profile": "Z6II/Z7II C1.70 static-analysis",
+          "activation_attempted": false,
+          "commit_attempted": false,
+          "commit_acknowledged": false,
+          "success": true,
+          "user_reported_reboot": false,
+          "cold_boot_verified": false,
+          "identity": {
+            "manufacturer": "Nikon Corporation",
+            "model": "Z 6_2",
+            "version": "V1.70",
+            "serial": "REDACTED"
+          },
+          "initial_state": {
+            "raw_authorized": 1,
+            "raw_status": 1
+          },
+          "final_state": {
+            "raw_authorized": 1,
+            "raw_status": 1
+          },
+          "normal_mode_944B": [
+            8193,
+            []
+          ],
+          "readback_verified": true
+        },
+        "runtime": {
+          "qemu_pid": 61392,
+          "started_unix": 1793274538.2321653,
+          "nor_store": "E:\\z62\\QEMU\\work\\z6ii-fw-lab\\.local\\integration-20261029\\input-r31\\runs-unlock\\20261029_194858_verify_88d37a\\private-nor.raw",
+          "transaction_gap_ms": 20,
+          "laboratory_pcie_transfer_ready": true
+        },
+        "server_stopped": true
+      }
+    ],
+    "success": true
+  },
+  "nor_total_changed_bytes": 2,
+  "nor_differences": [
+    {
+      "offset": "0x2a20004",
+      "old": 0,
+      "new": 178
+    },
+    {
+      "offset": "0x2a20005",
+      "old": 0,
+      "new": 106
+    }
+  ],
+  "known_limits": [
+    "2013 file I/O failures remain; full same-process unlock CLI not stable",
+    "NVMe trace-on verification passed; ordinary verification and 200ms timing attempt failed",
+    "No full SLA native boot, live image capture or natural shutter sound"
+  ],
+  "measurements": [
+    {
+      "name": "thirdparty-clear-on-native-04",
+      "boot_2_6_guest_wall": 43.078,
+      "menu_transition_wall": 27.032,
+      "menu_passed": true,
+      "clear_status": true
+    },
+    {
+      "name": "r3-original-linux-no-clear-03",
+      "boot_2_6_guest_wall": 47.343,
+      "menu_transition_wall": 29.286,
+      "menu_passed": true,
+      "clear_status": false
+    },
+    {
+      "name": "integrated-menu",
+      "boot_2_6_guest_wall": 43.078,
+      "menu_transition_wall": 25.047,
+      "menu_passed": true,
+      "clear_status": true
+    }
+  ],
+  "frontend_acceptance": {
+    "browser": "Egolite",
+    "running": true,
+    "error": null,
+    "guest": 57.39,
+    "gpu": {
+      "successful-uploads": 1322,
+      "rendered-commands": 1259,
+      "unsupported-commands": 0,
+      "failed-requests": 0
+    },
+    "app": [
+      "0x00000501"
+    ],
+    "menu_and_down_actions": true,
+    "window_was_minimized": true,
+    "screenshot": "camera-final.png"
+  },
+  "publication_redactions": [
+    "Camera serial numbers redacted; original local evidence retained."
+  ]
+}
