@@ -1,0 +1,97 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+"""Fetch verified upstream QEMU, apply the source overlay, and build ARM TCG."""
+import argparse
+import copy
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import tarfile
+import urllib.request
+
+ROOT = Path(__file__).resolve().parents[1]
+VERSION = '10.2.4'
+SHA256 = '821b545b92f165e57dddccac5077d76d4d436a226595b8813ad59306bbfd0746'
+SOURCES = ['qemu/nikon-z72.c', 'qemu/nikon-z72-counter.c', 'qemu/nikon-z72-uart.c',
+           'qemu/nikon-z72-input-config.c', 'qemu/nikon-z72-memory.c',
+           'qemu/nikon-z72-notify.c', 'qemu/nikon-z72-timer.c', 'qemu/nikon-z72-spi.c', 'qemu/nikon-z72-controller.c',
+           'qemu/nikon-z72-controller-gpio.c',
+           'qemu/nikon-z72-controller-rtc.c',
+           'qemu/nikon-z72-controller-i2c.c',
+           'qemu/nikon-z72-controller-supply.c',
+           'qemu/nikon-z72-controller-battery.c',
+           'qemu/nikon-z72-controller-dma.c',
+           'qemu/nikon-z72-controller-timer.c',
+           'qemu/nikon-z72-controller-adc.c',
+           'qemu/nikon-z72-controller-registers.c',
+           'qemu/nikon-z72-controller-spi.c',
+           'qemu/nikon-z72-controller.h',
+           'qemu/nikon-z72-profile.h', 'qemu/nikon-z62-profile.h',
+           'qemu/nikon-z62-lcd.c', 'qemu/nikon-z62-sensor-config.c',
+           'qemu/nikon-z72-graphics.c',
+           'qemu/nikon-gpu.h', 'qemu/prepare_source.py']
+
+def digest(path):
+    h = hashlib.sha256()
+    with path.open('rb') as f:
+        while chunk := f.read(1024*1024): h.update(chunk)
+    return h.hexdigest()
+
+def source_filter(member, destination):
+    """Preserve internal relative links, including on Python 3.10's backport."""
+    if member.issym():
+        root = Path(destination).resolve()
+        target = (root / member.name).parent / member.linkname
+        if Path(member.linkname).is_absolute() or not target.resolve().is_relative_to(root):
+            return None
+        # Python 3.10 checks linkname relative to the extraction root rather
+        # than the member's parent. Check the real target above, then let the
+        # standard filter validate the member path and strip ownership.
+        probe = copy.copy(member)
+        probe.linkname = '.'
+        filtered = tarfile.data_filter(probe, destination)
+        filtered.linkname = member.linkname
+        return filtered
+    try:
+        return tarfile.data_filter(member, destination)
+    except (tarfile.AbsoluteLinkError, tarfile.LinkOutsideDestinationError):
+        # EDK2 links outside the tree are not required for ARM TCG.
+        return None
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--work-dir',type=Path,default=ROOT/'.build')
+    p.add_argument('--archive',type=Path,help='Optional pre-downloaded original upstream tarball')
+    p.add_argument('--jobs',type=int,default=4)
+    a = p.parse_args()
+    if os.name == 'nt': p.error('Build in Linux or an explicitly selected WSL distribution')
+    if not 1 <= a.jobs <= 64: p.error('--jobs must be 1..64')
+    work = a.work_dir.resolve()
+    work.mkdir(parents=True,exist_ok=True)
+    archive = a.archive.resolve() if a.archive else work/f'qemu-{VERSION}.tar.xz'
+    if not archive.exists():
+        if a.archive: p.error('Requested archive does not exist')
+        print('Downloading original upstream QEMU',flush=True)
+        urllib.request.urlretrieve(f'https://download.qemu.org/qemu-{VERSION}.tar.xz',archive)
+    if digest(archive) != SHA256: raise RuntimeError('Upstream QEMU archive SHA-256 mismatch')
+    source = work/f'qemu-{VERSION}'
+    marker = source/'.wonderlantern-extracted-links-v2'
+    if not marker.exists() or marker.read_text().strip() != SHA256:
+        with tarfile.open(archive,'r:xz') as t: t.extractall(work,filter=source_filter)
+        marker.write_text(SHA256+'\n')
+    subprocess.run(['python3',str(ROOT/'qemu/prepare_source.py'),str(source)],check=True)
+    build = work/'build'
+    build.mkdir(exist_ok=True)
+    options = ['--target-list=arm-softmmu','--without-default-devices','--disable-docs','--disable-tools','--disable-user','--disable-werror','--disable-gtk','--disable-sdl','--disable-vnc','--disable-opengl','--disable-guest-agent','--disable-slirp','--disable-rust','--disable-debug-info']
+    if not (build/'build.ninja').exists(): subprocess.run([str(source/'configure'),*options],cwd=build,check=True)
+    subprocess.run(['ninja','-j',str(a.jobs),'qemu-system-arm'],cwd=build,check=True)
+    binary = build/'qemu-system-arm'
+    manifest = dict(qemu_version=VERSION,upstream_archive_sha256=SHA256,binary=str(binary),binary_sha256=digest(binary),sources={name:digest(ROOT/name) for name in SOURCES},configure=options)
+    destination = ROOT/'.local/build-manifest.json'
+    destination.parent.mkdir(exist_ok=True)
+    destination.write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+    subprocess.run([str(binary),'--version'],check=True)
+    print('Build manifest: '+str(destination),flush=True)
+
+if __name__ == '__main__': main()
