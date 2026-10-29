@@ -55,6 +55,35 @@ CONTAINER_SIZE = 49002888
 MAS_BASE = 0x10020000
 CACHE = WEBUI / "variants.json"
 SELECTIONS = WEBUI / "selections.json"
+PARAMS_PIN = WEBUI / "params.json"
+PARAM_SETS = (("lab", "实验室（出 HUD）"), ("real", "真机 NOR"),
+              ("nor", "上传 / NOR 提取"))
+
+
+def params_sets():
+    dirs = {"lab": ROOT / ".local" / "parameters_lab",
+            "real": ROOT / ".local" / "parameters_real",
+            "nor": WEBUI / "parameters"}
+    out = []
+    for sid, label in PARAM_SETS:
+        d = dirs[sid]
+        if (d / "group17.bin").is_file():
+            out.append(dict(id=sid, label=label, dir=str(d)))
+    return out
+
+
+def params_active(sets):
+    try:
+        pick = json.loads(PARAMS_PIN.read_text(encoding="utf-8")).get("source")
+    except (OSError, ValueError):
+        pick = None
+    by_id = {s["id"]: s for s in sets}
+    if pick in by_id:
+        return by_id[pick]
+    for sid in ("lab", "real", "nor"):
+        if sid in by_id:
+            return by_id[sid]
+    return None
 
 
 def load_selections():
@@ -119,12 +148,25 @@ def free_port():
         return s.getsockname()[1]
 
 
+_DIGEST_CACHE = {}
+
+
 def digest(path):
+    p = Path(path)
+    st = p.stat()
+    key = (str(p.resolve()), st.st_size, int(st.st_mtime))
+    hit = _DIGEST_CACHE.get(key)
+    if hit:
+        return hit
     h = hashlib.sha256()
-    with Path(path).open("rb") as f:
+    with p.open("rb") as f:
         for block in iter(lambda: f.read(1 << 20), b""):
             h.update(block)
-    return h.hexdigest()
+    value = h.hexdigest()
+    if len(_DIGEST_CACHE) > 64:
+        _DIGEST_CACHE.clear()
+    _DIGEST_CACHE[key] = value
+    return value
 
 
 def describe(path):
@@ -410,6 +452,8 @@ class Machine:
                "-global", "nikon-z72-boot-config.frame-sync=on",
                "-global", "nikon-z72-uart.enabled=on",
                "-chardev", "file,id=z62-console,path=%s" % (out / "guest-console.log")]
+        if cfg.get("no_shutdown"):
+            cmd.append("-no-shutdown")
         if cfg.get("main_screen"):
             for prop in ("nikon-z72-boot-config.frame-start=on",
                          "nikon-z72-input-config.laboratory-metadata-completion=on",
@@ -810,6 +854,14 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     info.update(pinned)
             return self._json(info)
+        if head == "/api/params":
+            payload = json.loads(body or b"{}")
+            src = payload.get("source", "")
+            if src not in {s["id"] for s in params_sets()}:
+                return self._json(dict(ok=False, error="unknown source"))
+            PARAMS_PIN.parent.mkdir(parents=True, exist_ok=True)
+            PARAMS_PIN.write_text(json.dumps({"source": src}), encoding="utf-8")
+            return self._json(dict(ok=True, source=src))
         if head == "/api/start":
             cfg = json.loads(body or b"{}")
             return self._json(MACHINE.start(cfg))
@@ -878,21 +930,18 @@ def inventory():
         info.update(verdict=classify(slot, info), source=source,
                     pinned=bool(pinned.get(slot)))
         out[slot] = info
-    params = WEBUI / "parameters" / "group17.bin"
-    real = ROOT / ".local" / "parameters_real" / "group17.bin"
-    lab = ROOT / ".local" / "parameters_lab" / "group17.bin"
-    chosen = params if params.is_file() else (real if real.is_file() else
-                                             (lab if lab.is_file() else None))
-    if chosen:
-        base = chosen.parent
-        out["parameters"] = dict(source=str(base),
+    sets = params_sets()
+    act = params_active(sets)
+    if act:
+        base = Path(act["dir"])
+        out["parameters"] = dict(source=str(base), active=act["id"], sets=sets,
                                  groups=[describe(base / ("group%d.bin" % n))
                                          for n, _, _ in GROUPS])
         out["parameters"]["aux"] = ",,".join(
             "%s/group%d.bin@%#x" % (str(base).replace("\\", "/"), n, a)
             for n, a, _ in GROUPS)
     else:
-        out["parameters"] = dict(source=None, groups=[])
+        out["parameters"] = dict(source=None, active=None, sets=[], groups=[])
     return out
 
 
@@ -1003,9 +1052,13 @@ function renderInputs(){
       '<input type="text" data-slot="'+k+'" value="'+(i.path||'')+'" title="'+(i.path||'')+'" placeholder="'+short+'">'+
       src+badge(i.verdict||'missing')+'<span class="badge">'+(i.size?Math.round(i.size/1024)+'K':'—')+'</span>'+reset+'</div>';
   }).join('')+
-  '<div class="row"><span style="width:88px;color:var(--dim)">参数组</span><span class="badge '+(INV.parameters&&INV.parameters.source?'ok':'warn')+'">'+
+  '<div class="row"><span style="width:88px;color:var(--dim)">参数组</span>'+
+  '<select id="paramsSel">'+(((INV.parameters&&INV.parameters.sets)||[]).map(s=>'<option value="'+s.id+'"'+(s.id===(INV.parameters&&INV.parameters.active)?' selected':'')+'>'+s.label+'</option>').join(''))+'</select>'+
+  '<span class="badge '+(INV.parameters&&INV.parameters.source?'ok':'warn')+'">'+
   ((INV.parameters&&INV.parameters.source)||'缺省')+'</span></div>';
   document.querySelectorAll('input[data-slot]').forEach(el=>el.onchange=()=>{INV[el.dataset.slot]={path:el.value,verdict:'non-stock',size:0};renderInputs();});
+  const psel=document.getElementById('paramsSel');
+  if(psel)psel.onchange=async()=>{await j('/api/params',{method:'POST',body:JSON.stringify({source:psel.value})});await reloadInv();};
   document.querySelectorAll('[data-forget]').forEach(b=>b.onclick=async()=>{
     await j('/api/forget',{method:'POST',body:JSON.stringify({slot:b.dataset.forget})});await reloadInv();});
 }
