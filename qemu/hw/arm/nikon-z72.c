@@ -15,6 +15,10 @@
 #include "hw/intc/arm_gic.h"
 #include "hw/sd/sd.h"
 #include "hw/sd/sdhci.h"
+#include "hw/pci-host/designware.h"
+#include "hw/pci/pci_host.h"
+#include "hw/block/flash.h"
+#include "system/blockdev.h"
 #include "chardev/char.h"
 #include "migration/vmstate.h"
 #include "system/address-spaces.h"
@@ -22,6 +26,7 @@
 #include "nikon-z72-profile.h"
 #include "nikon-z62-profile.h"
 #include "nikon-z72-controller.h"
+#include "nikon-z62-isp-input-core.h"
 
 #define TYPE_NIKON_Z72_DUAL MACHINE_TYPE_NAME("nikon-z72-dual-lab")
 #define TYPE_NIKON_Z62_DUAL MACHINE_TYPE_NAME("nikon-z62-dual-lab")
@@ -31,6 +36,9 @@ struct NikonZ72DualMachine {
     MachineState parent_obj;
     char *controller_firmware;
     bool controller_link;
+    bool native_nor_boot;
+    bool laboratory_audio_dma;
+    char *slave_runtime_fixture;
     char *master_boot_image;
     char *slave_boot_image;
     char *master_boot_aux;
@@ -46,6 +54,39 @@ static bool dual_controller_link_get(Object *obj, Error **errp)
 static void dual_controller_link_set(Object *obj, bool value, Error **errp)
 {
     NIKON_Z72_DUAL(obj)->controller_link = value;
+}
+
+static bool dual_native_nor_boot_get(Object *obj, Error **errp)
+{
+    return NIKON_Z72_DUAL(obj)->native_nor_boot;
+}
+
+static void dual_native_nor_boot_set(Object *obj, bool value, Error **errp)
+{
+    NIKON_Z72_DUAL(obj)->native_nor_boot = value;
+}
+
+static bool dual_audio_dma_get(Object *obj, Error **errp)
+{
+    return NIKON_Z72_DUAL(obj)->laboratory_audio_dma;
+}
+
+static void dual_audio_dma_set(Object *obj, bool value, Error **errp)
+{
+    NIKON_Z72_DUAL(obj)->laboratory_audio_dma = value;
+}
+
+static char *dual_slave_runtime_fixture_get(Object *obj, Error **errp)
+{
+    return g_strdup(NIKON_Z72_DUAL(obj)->slave_runtime_fixture);
+}
+
+static void dual_slave_runtime_fixture_set(Object *obj, const char *value,
+                                           Error **errp)
+{
+    NikonZ72DualMachine *s = NIKON_Z72_DUAL(obj);
+    g_free(s->slave_runtime_fixture);
+    s->slave_runtime_fixture = g_strdup(value);
 }
 
 static char *dual_controller_firmware_get(Object *obj, Error **errp)
@@ -188,7 +229,7 @@ static const hwaddr boot_config_addresses[] = {
     0x20023808, 0x20023900, 0x20023904, 0x20023a00,
     0x20023a04, 0x20023b00, 0x20023b04, 0x20024000,
     0x20024100, 0x20024300, 0x20024400, 0x20024404,
-    0x20024408, 0x20028000, 0x20028010, 0x20028030,
+    0x20024408, 0x2002440c, 0x20028000, 0x20028010, 0x20028030,
     0x20028040, 0x20028800, 0x20028810, 0x20028830,
     0x20028c00, 0x20028c10, 0x20028c30, 0x20029000,
     0x20029010, 0x20029030, 0x20029040, 0x20029800,
@@ -201,7 +242,7 @@ static const hwaddr boot_config_addresses[] = {
     0x2002bc30, 0x2002c000, 0x2002c010, 0x2002c030,
     0x2002c040, 0x2002c800, 0x2002c810, 0x2002c830,
     0x2002cc00, 0x2002cc10, 0x2002cc30, 0x2002e000,
-    0x2002e100, 0x2002e300, 0x2002e400, 0x2002e600,
+    0x2002e100, 0x2002e108, 0x2002e300, 0x2002e308, 0x2002e400, 0x2002e600,
     0x2002e604, 0x2002e608, 0x2002e700, 0x2002e704,
     0x2002e708, 0x2002e70c, 0x2002e710, 0x20030010,
     0x20030014, 0x20030018, 0x2003001c, 0x20030020,
@@ -230,7 +271,7 @@ static const hwaddr boot_config_addresses[] = {
     0x2004370c, 0x20043800, 0x20043804, 0x20043808,
     0x20043900, 0x20043904, 0x20043a00, 0x20043a04,
     0x20043b00, 0x20043b04, 0x20044000, 0x20044100,
-    0x20044300, 0x20044400, 0x20044404, 0x20044408,
+    0x20044300, 0x20044400, 0x20044404, 0x20044408, 0x2004440c,
     0x20048000, 0x20048010, 0x20048030, 0x20048040,
     0x20048800, 0x20048810, 0x20048830, 0x20048c00,
     0x20048c10, 0x20048c30, 0x20049000, 0x20049010,
@@ -243,8 +284,8 @@ static const hwaddr boot_config_addresses[] = {
     0x2004b830, 0x2004bc00, 0x2004bc10, 0x2004bc30,
     0x2004c000, 0x2004c010, 0x2004c030, 0x2004c040,
     0x2004c800, 0x2004c810, 0x2004c830, 0x2004cc00,
-    0x2004cc10, 0x2004cc30, 0x2004e000, 0x2004e100,
-    0x2004e300, 0x2004e400, 0x2004e600, 0x2004e604,
+    0x2004cc10, 0x2004cc30, 0x2004e000, 0x2004e100, 0x2004e108,
+    0x2004e300, 0x2004e308, 0x2004e400, 0x2004e600, 0x2004e604,
     0x2004e608, 0x2004e700, 0x2004e704, 0x2004e708,
     0x2004e70c, 0x2004e710, 0x20050010, 0x20050014,
     0x20050018, 0x2005001c, 0x20050020, 0x20050024,
@@ -419,7 +460,7 @@ static const hwaddr boot_config_addresses[] = {
     0x2b20003c, 0x2b20004c, 0x2b200050, 0x2b200054,
     0x2b200300,
     /* Link and PHY status: no endpoint is connected in this model. */
-    0x2b200058, 0x2b20005c,
+    0x2b200058, 0x2b20005c, 0x2b200210,
     /* Input-path setup and event banks; sample production is not modeled. */
     0x20068000, 0x20068004, 0x20068008, 0x2006800c,
     0x20068010, 0x20068014, 0x20068018, 0x20068020,
@@ -619,8 +660,17 @@ struct NikonZ72BootConfig {
     MemoryRegion sd_uhs2_caps;
     DeviceState *sd_controller;
     bool sd_host;
+    bool master_nvme_host;
+    bool laboratory_pcie_transfer_ready;
+    bool master_parallel_nor;
+    bool native_nor_boot;
+    MemoryRegion nor_boot_alias;
+    MemoryRegion nor_boot_sram;
+    MemoryRegion nor_boot_data;
+    DeviceState *pcie_host;
     bool z62_card_detect;
     bool sd_irq_level;
+    bool pcie_intx_pending;
     uint32_t dbi_table[0x8c0 / 4];
     uint32_t dbi_viewport;
     uint32_t dbi_regions[2 * 16 * 7];
@@ -644,11 +694,21 @@ struct NikonZ72BootConfig {
     uint32_t input_command_pending, input_command_bits;
     uint64_t input_command_count;
     QEMUTimer *input_command_timer;
+    /* Opt-in upstream-derived input-cycle and CAPSEQ experiments. */
+    bool laboratory_isp_input_cycle;
+    uint32_t isp_cycle_gate[3], isp_cycle_sdes[3];
+    Z6IIMask1InputCycle isp_cycle;
+    bool laboratory_capseq_actuator, laboratory_capseq_trace, capseq_timeout;
+    uint64_t capseq_delay_ns, capseq_generation, capseq_armed_generation;
+    uint64_t capseq_requests, capseq_completions, capseq_canceled, capseq_trace_count;
+    bool capseq_request, capseq_armed, capseq_done;
+    QEMUTimer *capseq_timer;
 };
 
 static bool dbi_accepts(void *opaque, hwaddr offset, unsigned size,
                         bool is_write, MemTxAttrs attrs)
 {
+    NikonZ72BootConfig *s = opaque;
     static const uint16_t offsets[] = {
         0x004, 0x010, 0x014, 0x018, 0x01c, 0x03c, 0x050,
         0x078, 0x07c, 0x080, 0x084, 0x088, 0x08c,
@@ -657,6 +717,9 @@ static bool dbi_accepts(void *opaque, hwaddr offset, unsigned size,
 
     if (size != 4 || (offset & 3)) {
         return false;
+    }
+    if (s->pcie_host) {
+        return offset < 0x1000;
     }
     if (offset >= 0x900 && offset <= 0x91c) {
         return true;
@@ -685,9 +748,18 @@ static uint32_t *dbi_word(NikonZ72BootConfig *s, hwaddr offset)
 static uint64_t dbi_read(void *opaque, hwaddr offset, unsigned size)
 {
     NikonZ72BootConfig *s = opaque;
-    uint32_t value = *dbi_word(s, offset);
-    /* The original bus guard requires negotiated speed 2 at this offset. */
-    if (s->sd_host && offset == 0x098) {
+    uint32_t value;
+    if (s->pcie_host) {
+        if (offset == 0x098) {
+            return s->dbi_table[offset / 4];
+        }
+        PCIDevice *root = PCI_DEVICE(&DESIGNWARE_PCIE_HOST(s->pcie_host)->root);
+        value = pci_host_config_read_common(root, offset, pci_config_size(root), size);
+    } else {
+        value = *dbi_word(s, offset);
+    }
+    /* The original link-control sequence requires low nibble 2 here. */
+    if (s->sd_host && !s->pcie_host && offset == 0x098) {
         value = (value & ~0xfu) | 2;
     }
     return value;
@@ -698,6 +770,15 @@ static void dbi_write(void *opaque, hwaddr offset, uint64_t value,
 {
     NikonZ72BootConfig *s = opaque;
 
+    if (s->pcie_host) {
+        if (offset == 0x098) {
+            s->dbi_table[offset / 4] = value;
+            return;
+        }
+        PCIDevice *root = PCI_DEVICE(&DESIGNWARE_PCIE_HOST(s->pcie_host)->root);
+        pci_host_config_write_common(root, offset, pci_config_size(root), value, size);
+        return;
+    }
     if (offset == 0x900) {
         s->dbi_viewport = value & 0x8000000f;
     } else if (offset == 0x104) {
@@ -774,16 +855,22 @@ static const MemoryRegionOps sd_clock_ops = {
 
 static void sd_update_irq(NikonZ72BootConfig *s)
 {
-    if (s->sd_host && s->intc) {
+    if ((s->sd_host || s->pcie_host) && s->intc) {
         /* The original vector 243 handler decodes INTA in status bit 28,
          * then invokes the card callback registered on the bus object. */
-        qemu_set_irq(qdev_get_gpio_in(s->intc, 243 - 32), s->sd_irq_level);
+        qemu_set_irq(qdev_get_gpio_in(s->intc, 243 - 32),
+                     s->pcie_host ? s->pcie_intx_pending : s->sd_irq_level);
     }
 }
 
 static void sd_irq_input(void *opaque, int line, int level)
 {
     NikonZ72BootConfig *s = opaque;
+    if (s->pcie_host && level && !s->sd_irq_level) {
+        /* PCIe Assert_INTA is a message latched by the SoC status block;
+         * its W1C acknowledgement does not consume an NVMe CQ entry. */
+        s->pcie_intx_pending = true;
+    }
     s->sd_irq_level = level != 0;
     sd_update_irq(s);
 }
@@ -808,6 +895,12 @@ static uint32_t *boot_config_value(NikonZ72BootConfig *s, hwaddr address);
 
 static void controller_update_irqs(NikonZ72BootConfig *s)
 {
+    if (s->laboratory_capseq_actuator && s->master_role && s->intc) {
+        uint32_t pending = *boot_config_value(s, 0x0426f008);
+        uint32_t masked = *boot_config_value(s, 0x0426f000);
+        qemu_set_irq(qdev_get_gpio_in(s->intc, 65 - 32),
+                     !!(pending & ~masked & 1));
+    }
     if (s->controller_connected && s->intc) {
         uint32_t pending = *boot_config_value(s, 0x0426f008);
         uint32_t masked = *boot_config_value(s, 0x0426f000);
@@ -843,6 +936,34 @@ static uint32_t *boot_config_value(NikonZ72BootConfig *s, hwaddr address)
         }
     }
     g_assert_not_reached();
+}
+
+#include "nikon-z62-capseq.h"
+
+static bool isp_cycle_engine_active(NikonZ72BootConfig *s)
+{
+    return z6ii_mask1_engine_active(s->isp_cycle_gate[0],
+        s->isp_cycle_gate[1], s->isp_cycle_gate[2], s->isp_cycle_sdes[0]);
+}
+
+static void isp_cycle_write(NikonZ72BootConfig *s, hwaddr address, uint32_t value)
+{
+    if (!s->laboratory_isp_input_cycle || !s->master_role) {
+        return;
+    }
+    uint32_t *state = NULL;
+    if (address >= 0x20068000 && address <= 0x20068014) {
+        state = &s->isp_cycle_gate[(address - 0x20068000) / 8];
+    } else if (address >= 0x20060000 && address <= 0x20060014) {
+        state = &s->isp_cycle_sdes[(address - 0x20060000) / 8];
+    }
+    if (!state) {
+        return;
+    }
+    *state = (address & 4) ? *state & ~value : *state | value;
+    if (!isp_cycle_engine_active(s)) {
+        z6ii_mask1_input_cancel(&s->isp_cycle);
+    }
 }
 
 static void input_update_irqs(NikonZ72BootConfig *s)
@@ -1003,6 +1124,10 @@ static void frame_sync_tick(void *opaque)
     NikonZ72BootConfig *s = opaque;
 
     if (s->frame_start && !s->frame_start_phase) {
+        if (s->laboratory_isp_input_cycle) {
+            z6ii_mask1_input_begin(&s->isp_cycle, isp_cycle_engine_active(s),
+                                  !!(s->isp_cycle_sdes[2] & 1));
+        }
         *boot_config_value(s, 0x20060044) |= 0x80;
         s->frame_start_phase = true;
         sync_update_irqs(s);
@@ -1011,6 +1136,12 @@ static void frame_sync_tick(void *opaque)
         return;
     }
     s->frame_start_phase = false;
+    if (s->laboratory_isp_input_cycle &&
+        z6ii_mask1_input_end(&s->isp_cycle, isp_cycle_engine_active(s))) {
+        /* Native bank0 bit0 / IRQ94, not sensor IRQ89 or pixel DMA. */
+        *boot_config_value(s, 0x20068210) |= 1;
+        input_update_irqs(s);
+    }
     *boot_config_value(s, 0x20060044) |= 0x10;
     if (s->sensor_sample) {
         /* The third bank's sample-ready bit drives the auto-sample event
@@ -1042,6 +1173,9 @@ static void frame_sync_enable(void *opaque, int line, int level)
     NikonZ72BootConfig *s = opaque;
 
     if (!level) {
+        if (s->laboratory_isp_input_cycle) {
+            z6ii_mask1_input_cancel(&s->isp_cycle);
+        }
         timer_del(s->frame_sync_timer);
         s->frame_start_phase = false;
     } else if (s->frame_sync && s->master_role &&
@@ -1067,8 +1201,21 @@ static uint64_t boot_config_read(void *opaque, hwaddr offset, unsigned size)
     NikonZ72ConfigWord *word = opaque;
     uint32_t value = word->device->values[word->index];
     NikonZ72BootConfig *s = word->device;
+    hwaddr address = boot_config_addresses[word->index];
+    if (capseq_active(s) && address == 0x04282014) {
+        value = (value & ~0x80u) | (s->capseq_done ? 0x80 : 0);
+    }
+    if (capseq_active(s) && address == 0x04282018) {
+        value = (value & ~0x100u) | (s->capseq_request ? 0x100 : 0);
+    }
+    if (s->laboratory_isp_input_cycle && s->master_role) {
+        if (address >= 0x20068000 && address <= 0x20068014) {
+            value = s->isp_cycle_gate[(address - 0x20068000) / 8];
+        } else if (address >= 0x20060000 && address <= 0x20060014) {
+            value = s->isp_cycle_sdes[(address - 0x20060000) / 8];
+        }
+    }
     if (s->controller_connected) {
-        hwaddr address = boot_config_addresses[word->index];
         if (address == 0x04282014) {
             value = (value & ~0x600u) | ((s->controller_levels & 3) << 9);
         } else if (address == 0x04282018) {
@@ -1103,12 +1250,31 @@ static uint64_t boot_config_read(void *opaque, hwaddr offset, unsigned size)
      * for up to 500 sleep units. The optional link profiles report the
      * trained state so the original initialization can proceed; only the
      * SD-host profile also supplies an endpoint window. */
-    if ((s->pcie_link || s->sd_host) &&
+    if ((s->pcie_link || s->sd_host || s->pcie_host) &&
         boot_config_addresses[word->index] == 0x2b200058) {
         value = (value & ~0x3f0000u) | 0x110000u;
     }
-    if (s->sd_host && boot_config_addresses[word->index] == 0x2b200024) {
-        value = (value & ~(1u << 28)) | (s->sd_irq_level ? 1u << 28 : 0);
+    if ((s->sd_host || s->pcie_host) && boot_config_addresses[word->index] == 0x2b200024) {
+        bool pending = s->pcie_host ? s->pcie_intx_pending : s->sd_irq_level;
+        value = (value & ~(1u << 28)) | (pending ? 1u << 28 : 0);
+    }
+    if (boot_config_addresses[word->index] == 0x2b200210) {
+        /* Experimental input contract only: the original requires this
+         * whole word nonzero before sector I/O, but its physical encoding
+         * is unknown. Opt-in functional readiness follows a real enabled
+         * endpoint and real NVMe CSTS, never firmware state or file results. */
+        if (s->pcie_host && s->laboratory_pcie_transfer_ready) {
+            PCIBridge *bridge = PCI_BRIDGE(&DESIGNWARE_PCIE_HOST(s->pcie_host)->root);
+            PCIDevice *endpoint = bridge->sec_bus.devices[0];
+            if (endpoint && (pci_get_word(endpoint->config + PCI_COMMAND) & 6) == 6) {
+                uint64_t bar = pci_get_long(endpoint->config + PCI_BASE_ADDRESS_0) & ~0xfu;
+                uint32_t status;
+                if (pci_dma_read(endpoint, bar + 0x1c, &status, 4) == MEMTX_OK) {
+                    return (le32_to_cpu(status) & 3) == 1;
+                }
+            }
+        }
+        return 0;
     }
     /* The firmware polls the input-path status word 0x20068060 on every
      * frame period; a running sensor interface would latch a ready
@@ -1132,12 +1298,60 @@ static void boot_config_write(void *opaque, hwaddr offset,
     NikonZ72BootConfig *s = word->device;
     hwaddr address = boot_config_addresses[word->index];
     uint32_t *stored = &s->values[word->index];
+    capseq_output(s, address, value);
+    isp_cycle_write(s, address, value);
+    /* Trace this experiment's GPIO index0, not the controller's frequent
+     * index2/3 acknowledgements, so later requests retain a trace budget. */
+    if (s->master_role &&
+        ((address == 0x0426f010 && (value & 1)) ||
+         ((address == 0x0426f000 || address == 0x0426f014) &&
+          ((value ^ *stored) & 1)))) {
+        capseq_trace(s, "gpio-config", address, value);
+    }
+    if (s->native_nor_boot) {
+        /* Native boot 6C28..6C6C uses this extra two-bank exchange.
+         * Completion timing is synchronous, like the existing DDR profile;
+         * status cannot be manufactured by writing the status register. */
+        for (unsigned bank = 0; bank < 2; bank++) {
+            hwaddr base = 0x2002e000 + bank * 0x20000;
+            uint32_t *status = &s->values[boot_config_index_of(base + 0x300)];
+            uint32_t *ready = &s->values[boot_config_index_of(base + 0x308)];
+            if (address == base + 0x300) {
+                *status &= ~((uint32_t)value & 0x10001);
+                return;
+            }
+            if (address == base + 0x308) {
+                return;
+            }
+            if (address == base + 0x108) {
+                *stored = value;
+                if (s->auto_complete && address != s->blocked_control && value == 1) {
+                    *ready |= 1;
+                }
+                return;
+            }
+            if (address == base + 0x100) {
+                *stored = value;
+                if (s->auto_complete && address != s->blocked_control && value == 0) {
+                    *status = (*status & ~1u) | 0x10000;
+                    *ready &= ~1u;
+                } else if (s->auto_complete && address != s->blocked_control && value == 1) {
+                    *status = (*status & ~0x10000u) | 1;
+                }
+                return;
+            }
+        }
+    }
     if (address == 0x20068104 && value == 1) {
         qemu_set_irq(s->sensor_submit_irq, 0);
         qemu_set_irq(s->sensor_submit_irq, 1);
         qemu_set_irq(s->sensor_submit_irq, 0);
     }
-    if (s->sd_host && address == 0x2b200024) {
+    if ((s->sd_host || s->pcie_host) && address == 0x2b200024) {
+        if (s->pcie_host && (value & (1u << 28))) {
+            s->pcie_intx_pending = false;
+            sd_update_irq(s);
+        }
         /* INTA follows its source. A status acknowledgement cannot clear
          * an asserted source or create an interrupt while it is low. */
         *stored = (uint32_t)value & ~(1u << 28);
@@ -1166,7 +1380,9 @@ static void boot_config_write(void *opaque, hwaddr offset,
      * first event group so the firmware's polling sees activity. */
     if (address == 0x20068008 && value) {
         *stored = (uint32_t)value;
-        *boot_config_value(s, 0x20068200) |= 0x79;
+        if (!(s->laboratory_isp_input_cycle && s->master_role)) {
+            *boot_config_value(s, 0x20068200) |= 0x79;
+        }
         input_update_irqs(s);
         return;
     }
@@ -1185,20 +1401,22 @@ static void boot_config_write(void *opaque, hwaddr offset,
         input_update_irqs(s);
         return;
     }
+    uint32_t owned_gpio_irqs = (s->controller_connected ? 0xc : 0) |
+                              (capseq_active(s) ? 1 : 0);
+    if (owned_gpio_irqs && address == 0x0426f008) {
+        *stored = (value & ~owned_gpio_irqs) | (*stored & owned_gpio_irqs);
+        return;
+    }
+    if (owned_gpio_irqs && address == 0x0426f010) {
+        *boot_config_value(s, 0x0426f008) &= ~(value & owned_gpio_irqs);
+        *stored = value;
+        controller_update_irqs(s);
+        return;
+    }
     if (s->controller_connected) {
         if (address == 0x04282018 && (value & (1u << 28))) {
             s->controller_ack_output = !!(value & 0x1000);
             qemu_set_irq(s->controller_ack_irq, s->controller_ack_output);
-        }
-        if (address == 0x0426f008) {
-            *stored = (value & ~0xcu) | (*stored & 0xc);
-            return;
-        }
-        if (address == 0x0426f010) {
-            *boot_config_value(s, 0x0426f008) &= ~(value & 0xcu);
-            *stored = value;
-            controller_update_irqs(s);
-            return;
         }
     }
     /* The upper half selects output bits to update. A connected engine's
@@ -1232,6 +1450,9 @@ static void boot_config_write(void *opaque, hwaddr offset,
     if (address == 0x2003016c || address == 0x2005016c) {
         return; /* Result word is read-only; zero is the success assumption. */
     }
+    if (address == 0x2b200210) {
+        return; /* Hardware input, not a software-writable mount flag. */
+    }
     for (unsigned i = 0; i < G_N_ELEMENTS(boot_completions); i++) {
         const NikonZ72Completion *c = &boot_completions[i];
         if (address == c->status) {
@@ -1239,6 +1460,18 @@ static void boot_config_write(void *opaque, hwaddr offset,
             return;
         }
         if (address == c->control) {
+            /* Boot 6BB0 disables the existing PHY lanes and waits on
+             * status.bit16. Runtime initialization only used enable=1.
+             * Scope the new acknowledgement to the recovered lane pairs. */
+            bool native_phy = s->native_nor_boot && (address & 0xff) == 0x10 &&
+                ((address >= 0x20028010 && address <= 0x2002cc10) ||
+                 (address >= 0x20048010 && address <= 0x2004cc10));
+            if (native_phy && value == 0) {
+                *stored = 0;
+                *boot_config_value(s, c->status) = s->auto_complete &&
+                    address != s->blocked_control ? 0x10000 : 0;
+                return;
+            }
             bool accepted = c->maximum_phase ?
                 (value & 0xffff) == c->command &&
                 (value >> 16) <= c->maximum_phase : value == c->command;
@@ -1981,7 +2214,8 @@ static bool seq_transfer(NikonZ72BootConfig *s, unsigned channel)
             destination, &destination_offset, &destination_span, true,
             MEMTXATTRS_UNSPECIFIED);
 
-        if (!memory_region_is_ram(source_region) ||
+        if ((!memory_region_is_ram(source_region) &&
+             !memory_region_is_romd(source_region)) ||
             !memory_region_is_ram(destination_region) ||
             memory_region_is_rom(destination_region)) {
             return false;
@@ -2275,8 +2509,9 @@ static void boot_config_reset(Object *obj, ResetType type)
     memset(s->dbi_regions, 0, sizeof(s->dbi_regions));
     s->dbi_viewport = 0;
     s->sd_irq_level = false;
+    s->pcie_intx_pending = false;
     sd_update_irq(s);
-    if (s->sd_host && s->release_config) {
+    if (s->sd_controller && s->release_config) {
         memset(memory_region_get_ram_ptr(&s->sd_config_ram), 0, 0x2000);
     }
     memset(s->input_levels, 0, sizeof(s->input_levels));
@@ -2293,6 +2528,14 @@ static void boot_config_reset(Object *obj, ResetType type)
     s->input_command_count = 0;
     s->frame_sync_count = 0;
     s->frame_start_phase = false;
+    timer_del(s->capseq_timer);
+    s->capseq_request = s->capseq_armed = s->capseq_done = false;
+    s->capseq_requests = s->capseq_completions = s->capseq_canceled = 0;
+    s->capseq_generation = s->capseq_armed_generation = s->capseq_trace_count = 0;
+    memset(s->isp_cycle_gate, 0, sizeof(s->isp_cycle_gate));
+    memset(s->isp_cycle_sdes, 0, sizeof(s->isp_cycle_sdes));
+    memset(&s->isp_cycle, 0, sizeof(s->isp_cycle));
+    controller_update_irqs(s);
     input_update_irqs(s);
     sync_update_irqs(s);
     if (s->intc) {
@@ -2348,8 +2591,8 @@ static int boot_config_post_load(void *opaque, int version_id)
 
 static const VMStateDescription boot_config_vmstate = {
     .name = TYPE_NIKON_Z72_BOOT_CONFIG,
-    .version_id = 37,
-    .minimum_version_id = 37,
+    .version_id = 38,
+    .minimum_version_id = 38,
     .post_load = boot_config_post_load,
     .fields = (const VMStateField[]) {
         VMSTATE_UINT32_ARRAY(values, NikonZ72BootConfig, BOOT_CONFIG_WORDS),
@@ -2372,6 +2615,22 @@ static const VMStateDescription boot_config_vmstate = {
         VMSTATE_UINT32(input_command_pending, NikonZ72BootConfig),
         VMSTATE_UINT32(input_command_bits, NikonZ72BootConfig),
         VMSTATE_UINT64(input_command_count, NikonZ72BootConfig),
+        VMSTATE_TIMER_PTR(capseq_timer, NikonZ72BootConfig),
+        VMSTATE_BOOL(capseq_request, NikonZ72BootConfig),
+        VMSTATE_BOOL(capseq_armed, NikonZ72BootConfig),
+        VMSTATE_BOOL(capseq_done, NikonZ72BootConfig),
+        VMSTATE_UINT64(capseq_generation, NikonZ72BootConfig),
+        VMSTATE_UINT64(capseq_armed_generation, NikonZ72BootConfig),
+        VMSTATE_UINT64(capseq_requests, NikonZ72BootConfig),
+        VMSTATE_UINT64(capseq_completions, NikonZ72BootConfig),
+        VMSTATE_UINT64(capseq_canceled, NikonZ72BootConfig),
+        VMSTATE_UINT64(capseq_trace_count, NikonZ72BootConfig),
+        VMSTATE_UINT32_ARRAY(isp_cycle_gate, NikonZ72BootConfig, 3),
+        VMSTATE_UINT32_ARRAY(isp_cycle_sdes, NikonZ72BootConfig, 3),
+        VMSTATE_BOOL(isp_cycle.pending, NikonZ72BootConfig),
+        VMSTATE_UINT64(isp_cycle.admitted, NikonZ72BootConfig),
+        VMSTATE_UINT64(isp_cycle.completed, NikonZ72BootConfig),
+        VMSTATE_UINT64(isp_cycle.canceled, NikonZ72BootConfig),
         VMSTATE_UINT8_ARRAY(snapshot_table, NikonZ72BootConfig, 0x800),
         VMSTATE_UINT8_ARRAY(mirror_table, NikonZ72BootConfig, 0x800),
         VMSTATE_UINT8_ARRAY(file_table, NikonZ72BootConfig, 0x100),
@@ -2396,6 +2655,13 @@ static void boot_config_init(Object *obj)
     s->frame_sync_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, frame_sync_tick, s);
     s->input_command_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL,
                                          input_command_complete, s);
+    s->capseq_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, capseq_complete, s);
+    object_property_add_uint64_ptr(obj, "capseq-requests", &s->capseq_requests, OBJ_PROP_FLAG_READ);
+    object_property_add_uint64_ptr(obj, "capseq-completions", &s->capseq_completions, OBJ_PROP_FLAG_READ);
+    object_property_add_uint64_ptr(obj, "capseq-canceled", &s->capseq_canceled, OBJ_PROP_FLAG_READ);
+    object_property_add_uint64_ptr(obj, "isp-input-admitted", &s->isp_cycle.admitted, OBJ_PROP_FLAG_READ);
+    object_property_add_uint64_ptr(obj, "isp-input-completed", &s->isp_cycle.completed, OBJ_PROP_FLAG_READ);
+    object_property_add_uint64_ptr(obj, "isp-input-canceled", &s->isp_cycle.canceled, OBJ_PROP_FLAG_READ);
     object_property_add_uint64_ptr(obj, "input-command-count",
                                    &s->input_command_count, OBJ_PROP_FLAG_READ);
     object_property_add_uint64_ptr(obj, "frame-sync-count", &s->frame_sync_count,
@@ -2438,6 +2704,8 @@ static void boot_config_finalize(Object *obj)
     timer_free(s->frame_sync_timer);
     timer_del(s->input_command_timer);
     timer_free(s->input_command_timer);
+    timer_del(s->capseq_timer);
+    timer_free(s->capseq_timer);
 }
 
 static void boot_config_realize(DeviceState *dev, Error **errp)
@@ -2447,13 +2715,89 @@ static void boot_config_realize(DeviceState *dev, Error **errp)
     /* RAM-block names must stay unique when both engines exist in one
      * machine; the role suffix keeps the dual machine's blocks apart. */
     const char *tag = s->master_role ? "master" : "slave";
+    if (s->master_role && s->laboratory_capseq_actuator &&
+        (!s->capseq_delay_ns || s->capseq_delay_ns > 1000000000)) {
+        error_setg(errp, "CAPSEQ experiment requires explicit capseq-delay-ns in 1..1000000000");
+        return;
+    }
+    if (s->master_role && s->laboratory_isp_input_cycle &&
+        !(s->frame_sync && s->frame_start)) {
+        error_setg(errp, "ISP input-cycle experiment requires frame-sync and frame-start");
+        return;
+    }
     if (s->release_config) {
-        /* Configuration readback and banked translation descriptors only;
-         * this block does not create a link, an endpoint or DMA completion. */
+        if ((s->master_parallel_nor || s->native_nor_boot) && s->master_role) {
+            DriveInfo *drive = drive_get(IF_PFLASH, 0, 0);
+            if (!drive) {
+                error_setg(errp, "Parallel NOR requires a private pflash drive");
+                return;
+            }
+            DeviceState *flash = qdev_new("cfi.pflash02");
+            qdev_prop_set_uint32(flash, "num-blocks", 512);
+            qdev_prop_set_uint32(flash, "sector-length", 0x20000);
+            qdev_prop_set_uint8(flash, "width", 2);
+            qdev_prop_set_uint8(flash, "mappings", 1);
+            qdev_prop_set_uint16(flash, "id0", 0x0001);
+            qdev_prop_set_uint16(flash, "id1", 0x227e);
+            qdev_prop_set_uint16(flash, "id2", 0x2223);
+            qdev_prop_set_uint16(flash, "id3", 0x2201);
+            qdev_prop_set_uint16(flash, "unlock-addr0", 0x555);
+            qdev_prop_set_uint16(flash, "unlock-addr1", 0x2aa);
+            qdev_prop_set_string(flash, "name", "z62-private-parallel-nor");
+            qdev_prop_set_drive_err(flash, "drive", blk_by_legacy_dinfo(drive), errp);
+            if (*errp) {
+                object_unref(OBJECT(flash));
+                return;
+            }
+            object_property_add_child(OBJECT(dev), "parallel-nor", OBJECT(flash));
+            sysbus_realize_and_unref(SYS_BUS_DEVICE(flash), &error_fatal);
+            memory_region_add_subregion_overlap(root, 0x10000000,
+                sysbus_mmio_get_region(SYS_BUS_DEVICE(flash), 0), 1);
+            if (s->native_nor_boot) {
+                /* The dump's ARM vector literals point below 0x20000.
+                 * Both reset vectors and the native L1 table therefore
+                 * require this boot alias. No image bytes are preloaded. */
+                memory_region_init_alias(&s->nor_boot_alias, OBJECT(dev),
+                    "z62-nor-reset-alias",
+                    sysbus_mmio_get_region(SYS_BUS_DEVICE(flash), 0),
+                    0, 0x20000);
+                memory_region_add_subregion_overlap(root, 0,
+                    &s->nor_boot_alias, 2);
+                /* Native stacks/heap bounds end at 7F023EC0. The boot
+                 * scatter records separately require 7F800000..7F84C05F.
+                 * Map their page-rounded footprints, not guessed chip RAM. */
+                memory_region_init_ram(&s->nor_boot_sram, OBJECT(dev),
+                    "z62-native-boot-stack-ram", 0x24000, &error_fatal);
+                memory_region_add_subregion(root, 0x7f000000,
+                    &s->nor_boot_sram);
+                memory_region_init_ram(&s->nor_boot_data, OBJECT(dev),
+                    "z62-native-boot-data-ram", 0x4d000, &error_fatal);
+                memory_region_add_subregion(root, 0x7f800000,
+                    &s->nor_boot_data);
+            }
+        }
+        if (s->master_nvme_host && s->master_role) {
+            DeviceState *host = qdev_new(TYPE_DESIGNWARE_PCIE_HOST);
+            s->pcie_host = host;
+            host->id = g_strdup("z62-pcie-master");
+            object_property_add_child(OBJECT(dev), "nvme-pcie", OBJECT(host));
+            object_property_set_link(OBJECT(host), "system-memory", OBJECT(root),
+                                     &error_fatal);
+            qdev_prop_set_bit(host, "direct-cfg0", true);
+            sysbus_realize_and_unref(SYS_BUS_DEVICE(host), &error_fatal);
+            sysbus_connect_irq(SYS_BUS_DEVICE(host), 0,
+                               qdev_get_gpio_in_named(dev, "sd-irq", 0));
+            /* Native MAS1051A838 registers the root MSI handler on 246;
+             * INTA uses 243 and status 2B200024.bit28 independently. */
+            sysbus_connect_irq(SYS_BUS_DEVICE(host), 4,
+                               qdev_get_gpio_in(s->intc, 246 - 32));
+        }
+        /* The optional NVMe profile delegates the DBI window to a real
+         * PCIe bridge. The default retains passive startup readback. */
         memory_region_init_io(&s->dbi_ram, OBJECT(dev), &dbi_ops, s,
                               "z72-pcie-configuration", 0x1000);
         memory_region_add_subregion(root, 0x2a900000, &s->dbi_ram);
-        if (s->sd_host) {
+        if (s->sd_host && !s->pcie_host) {
             DeviceState *sd = qdev_new("generic-sdhci");
 
             sd->id = g_strdup_printf("z72-sd-%s", tag);
@@ -2545,7 +2889,12 @@ static void boot_config_realize(DeviceState *dev, Error **errp)
         qdev_prop_set_uint32(s->timer, "line", s->timer_line);
         qdev_prop_set_uint32(s->timer, "tick-us", s->timer_tick_us);
         qdev_prop_set_bit(s->timer, "tick-enabled", s->timer_tick);
-        qdev_prop_set_bit(s->timer, "pcie-clock", s->sd_host);
+        qdev_prop_set_bit(s->timer, "pcie-clock", s->sd_host || s->pcie_host);
+        if (s->pcie_host) {
+            PCIBridge *bridge = PCI_BRIDGE(&DESIGNWARE_PCIE_HOST(s->pcie_host)->root);
+            object_property_set_link(OBJECT(s->timer), "pcie-slot",
+                                     OBJECT(&bridge->sec_bus), &error_fatal);
+        }
         object_property_add_child(OBJECT(dev), "z72-timer", OBJECT(s->timer));
         sysbus_realize_and_unref(SYS_BUS_DEVICE(s->timer), &error_fatal);
         memory_region_add_subregion(root, 0x2B000000,
@@ -2647,6 +2996,11 @@ static void boot_config_class_init(ObjectClass *oc, const void *data)
         DEFINE_PROP_BOOL("frame-sync", NikonZ72BootConfig, frame_sync, false),
         DEFINE_PROP_BOOL("sensor-sample", NikonZ72BootConfig, sensor_sample, false),
         DEFINE_PROP_BOOL("frame-start", NikonZ72BootConfig, frame_start, false),
+        DEFINE_PROP_BOOL("laboratory-isp-input-cycle", NikonZ72BootConfig, laboratory_isp_input_cycle, false),
+        DEFINE_PROP_BOOL("laboratory-capseq-actuator", NikonZ72BootConfig, laboratory_capseq_actuator, false),
+        DEFINE_PROP_BOOL("laboratory-capseq-trace", NikonZ72BootConfig, laboratory_capseq_trace, false),
+        DEFINE_PROP_UINT64("capseq-delay-ns", NikonZ72BootConfig, capseq_delay_ns, 0),
+        DEFINE_PROP_BOOL("capseq-timeout", NikonZ72BootConfig, capseq_timeout, false),
         DEFINE_PROP_BOOL("input-command-completion", NikonZ72BootConfig,
                          input_command_completion, false),
         DEFINE_PROP_BOOL("frame-generate", NikonZ72BootConfig, frame_generate, false),
@@ -2654,6 +3008,14 @@ static void boot_config_class_init(ObjectClass *oc, const void *data)
         DEFINE_PROP_BOOL("sample-group1", NikonZ72BootConfig, sample_group1, false),
         DEFINE_PROP_BOOL("pcie-link", NikonZ72BootConfig, pcie_link, false),
         DEFINE_PROP_BOOL("sd-host", NikonZ72BootConfig, sd_host, false),
+        DEFINE_PROP_BOOL("master-nvme-host", NikonZ72BootConfig,
+                         master_nvme_host, false),
+        DEFINE_PROP_BOOL("laboratory-pcie-transfer-ready", NikonZ72BootConfig,
+                         laboratory_pcie_transfer_ready, false),
+        DEFINE_PROP_BOOL("master-parallel-nor", NikonZ72BootConfig,
+                         master_parallel_nor, false),
+        DEFINE_PROP_BOOL("native-nor-boot", NikonZ72BootConfig,
+                         native_nor_boot, false),
         DEFINE_PROP_BOOL("z62-card-detect", NikonZ72BootConfig,
                          z62_card_detect, false),
         DEFINE_PROP_UINT32("sample-lines", NikonZ72BootConfig, sample_lines, 0),
@@ -2723,6 +3085,7 @@ struct NikonZ72BootStore {
     ARMCPU *cpus[2];
     unsigned cpu_count;
     bool harvest;
+    bool native_nor_boot;
 };
 
 /* CCITT CRC-16, polynomial 0x1021, zero initial value: the same transform
@@ -2955,6 +3318,10 @@ static char *boot_store_image_get(Object *obj, Error **errp)
 static void boot_store_image_set(Object *obj, const char *value, Error **errp)
 {
     NikonZ72BootStore *s = NIKON_Z72_BOOT_STORE(obj);
+    if (s->native_nor_boot) {
+        error_setg(errp, "Native NOR boot forbids image preloads");
+        return;
+    }
     /* File zero is the firmware image; replacing it reprograms the store. */
     boot_store_load(&s->files[0], value, s->entry, errp);
     if (*errp) {
@@ -2975,6 +3342,10 @@ static char *boot_store_auxiliary_get(Object *obj, Error **errp)
 static void boot_store_auxiliary_set(Object *obj, const char *value, Error **errp)
 {
     NikonZ72BootStore *s = NIKON_Z72_BOOT_STORE(obj);
+    if (s->native_nor_boot) {
+        error_setg(errp, "Native NOR boot forbids auxiliary preloads");
+        return;
+    }
     g_free(s->auxiliary);
     s->auxiliary = g_strdup(value);
 }
@@ -2986,6 +3357,10 @@ static bool boot_store_harvest_get(Object *obj, Error **errp)
 
 static void boot_store_harvest_set(Object *obj, bool value, Error **errp)
 {
+    if (value && NIKON_Z72_BOOT_STORE(obj)->native_nor_boot) {
+        error_setg(errp, "Native NOR boot forbids decoded-window replacement");
+        return;
+    }
     NIKON_Z72_BOOT_STORE(obj)->harvest = value;
 }
 
@@ -2998,6 +3373,15 @@ static void boot_store_harvest_set(Object *obj, bool value, Error **errp)
 static void boot_store_reset(void *opaque)
 {
     NikonZ72BootStore *s = opaque;
+    if (s->native_nor_boot) {
+        /* Do not replay MAIN, parameters, decoded windows, or boot bytes.
+         * Powered-off SLA cores remain off until a native release exists. */
+        for (unsigned i = 0; i < s->cpu_count; i++) {
+            cpu_reset(CPU(s->cpus[i]));
+            cpu_set_pc(CPU(s->cpus[i]), 0);
+        }
+        return;
+    }
     if (s->cpu_count == 0 || s->entry == 0) {
         return;
     }
@@ -3017,8 +3401,11 @@ static void boot_store_reset(void *opaque)
         if (file->size == 0 || (harvested && i == 0)) {
             continue;
         }
-        address_space_write(view, file->address, MEMTXATTRS_UNSPECIFIED,
-                            file->data, file->size);
+        /* This is the explicitly preloaded execution image, not a flash
+         * programming transaction. ROM loading also supports optional NOR.
+         * Persistent groups must not be present in the replay list. */
+        address_space_write_rom(view, file->address, MEMTXATTRS_UNSPECIFIED,
+                                file->data, file->size);
     }
     for (unsigned i = 0; i < s->cpu_count; i++) {
         CPUState *cs = CPU(s->cpus[i]);
@@ -3123,6 +3510,9 @@ static DeviceState *nikon_z72_engine_init(MachineState *machine, MemoryRegion *v
     bool z62 = object_dynamic_cast(OBJECT(machine), TYPE_NIKON_Z62_DUAL);
     bool slave = windows == nikon_z72_slave_windows ||
                  windows == nikon_z62_slave_windows;
+    bool native_nor_boot = z62 && NIKON_Z72_DUAL(machine)->native_nor_boot;
+    bool slave_fixture = native_nor_boot && slave &&
+                         NIKON_Z72_DUAL(machine)->slave_runtime_fixture;
     MemoryRegion *ram = g_new0(MemoryRegion, count);
     /* Execution cores within one selected role share RAM and a GIC. The
      * master and slave roles remain separate machines, not SMP cores. */
@@ -3134,6 +3524,10 @@ static DeviceState *nikon_z72_engine_init(MachineState *machine, MemoryRegion *v
         object_property_set_int(OBJECT(cpus[i]), "core-count", num_cpus, &error_fatal);
         object_property_set_int(OBJECT(cpus[i]), "reset-cbar", Z72_PRIVATE_BASE, &error_fatal);
         object_property_set_int(OBJECT(cpus[i]), "cntfrq", Z72_COUNTER_FREQUENCY, &error_fatal);
+        if (native_nor_boot && slave && !slave_fixture) {
+            object_property_set_bool(OBJECT(cpus[i]), "start-powered-off",
+                                     true, &error_fatal);
+        }
         /* Each engine executes through its own view: the shared system
          * memory for a single-role machine, a private container when both
          * engines run in one machine. */
@@ -3146,6 +3540,7 @@ static DeviceState *nikon_z72_engine_init(MachineState *machine, MemoryRegion *v
      * after a store update boots the replaced firmware. */
     DeviceState *boot_store = qdev_new(TYPE_NIKON_Z72_BOOT_STORE);
     NikonZ72BootStore *store = NIKON_Z72_BOOT_STORE(boot_store);
+    store->native_nor_boot = native_nor_boot && !slave_fixture;
     store->entry = Z72_MASTER_BASE;
     for (unsigned i = 0; i < num_cpus; i++) {
         store->cpus[i] = cpus[i];
@@ -3217,14 +3612,14 @@ static DeviceState *nikon_z72_engine_init(MachineState *machine, MemoryRegion *v
              * turns the scaffold off. */
             uint8_t *host = memory_region_get_ram_ptr(&ram[i]);
 
-            if (!getenv("Z62_NO_RES")) {
+            if (!native_nor_boot && !getenv("Z62_NO_RES")) {
                 host[NIKON_RES_VERSION_ADDR - w->base] = 0x15;
                 host[NIKON_RES_VERSION_ADDR - w->base + 1] = 0x00;
             }
         }
         if (NIKON_STATUS_ADDR >= w->base &&
             NIKON_STATUS_COUNT + 4 <= w->base + w->size &&
-            getenv("Z62_CLEAR_STATUS")) {
+            !native_nor_boot && getenv("Z62_CLEAR_STATUS")) {
             NikonStatusClear *sc = g_new0(NikonStatusClear, 1);
 
             sc->host = memory_region_get_ram_ptr(&ram[i]);
@@ -3307,6 +3702,7 @@ static DeviceState *nikon_z72_engine_init(MachineState *machine, MemoryRegion *v
         qdev_prop_set_uint32(config, "stage-base", 0xcaa00000);
     }
     qdev_prop_set_bit(config, "master-role", !slave);
+    qdev_prop_set_bit(config, "native-nor-boot", native_nor_boot && !slave);
     qdev_prop_set_bit(config, "z62-card-detect", z62);
     qdev_prop_set_bit(config, "own-file", own_file);
     object_property_set_link(OBJECT(config), "intc", OBJECT(gic), &error_fatal);
@@ -3400,6 +3796,18 @@ static DeviceState *nikon_z72_engine_init(MachineState *machine, MemoryRegion *v
         }
     }
     DeviceState *counter = qdev_new("nikon-z72-counter");
+    if (z62 && !slave && NIKON_Z72_DUAL(machine)->laboratory_audio_dma) {
+        DeviceState *audio = qdev_new("nikon-z62-audio-dma");
+        object_property_add_child(OBJECT(machine), "master-audio-dma", OBJECT(audio));
+        object_property_set_link(OBJECT(audio), "root", OBJECT(view), &error_fatal);
+        sysbus_realize_and_unref(SYS_BUS_DEVICE(audio), &error_fatal);
+        memory_region_add_subregion_overlap(view, 0x2c030000,
+            sysbus_mmio_get_region(SYS_BUS_DEVICE(audio), 0), 2);
+        for (unsigned channel = 0; channel < 8; channel++) {
+            sysbus_connect_irq(SYS_BUS_DEVICE(audio), channel,
+                               qdev_get_gpio_in(gic, 142 + channel - 32));
+        }
+    }
     if (!slave) {
         if (z62) {
             DeviceState *lcd = qdev_new("nikon-z62-lcd");
@@ -3509,6 +3917,16 @@ static void nikon_z72_dual_init(MachineState *machine)
 {
     NikonZ72DualMachine *s = NIKON_Z72_DUAL(machine);
     bool z62 = object_dynamic_cast(OBJECT(machine), TYPE_NIKON_Z62_DUAL);
+    if (s->native_nor_boot &&
+        (!z62 || s->master_boot_image || s->slave_boot_image ||
+         s->master_boot_aux || s->slave_boot_aux)) {
+        error_setg(&error_fatal,
+            "Native NOR boot requires Z62 and forbids all boot image/aux preloads");
+    }
+    if (s->slave_runtime_fixture && !s->native_nor_boot) {
+        error_setg(&error_fatal,
+            "Slave runtime fixture is diagnostic-only and requires native NOR boot");
+    }
     if (machine->smp.cpus != 4) {
         error_setg(&error_fatal, "Dual-engine machine requires four engine cores");
     }
@@ -3550,7 +3968,9 @@ static void nikon_z72_dual_init(MachineState *machine)
                           z62 ? nikon_z62_slave_windows : nikon_z72_slave_windows,
                           z62 ? G_N_ELEMENTS(nikon_z62_slave_windows) :
                                 G_N_ELEMENTS(nikon_z72_slave_windows), slave_message,
-                          NULL, false, s->slave_boot_image, s->slave_boot_aux);
+                          NULL, false, s->slave_runtime_fixture ?
+                          s->slave_runtime_fixture : s->slave_boot_image,
+                          s->slave_boot_aux);
     /* Communication initialization uses master bank 6 bit 3 and slave
      * bank 8 bit 10. The board connects the two readiness signals; this
      * wiring is inferred from the complementary firmware startup paths. */
@@ -3693,6 +4113,20 @@ static void dual_machine_class_init(ObjectClass *klass, const void *data)
                                   dual_controller_link_set);
     object_class_property_set_description(klass, "controller-link",
         "Experimental serial peers and controller readiness inputs");
+    object_class_property_add_bool(klass, "native-nor-boot",
+                                  dual_native_nor_boot_get,
+                                  dual_native_nor_boot_set);
+    object_class_property_add_bool(klass, "laboratory-audio-dma",
+                                  dual_audio_dma_get, dual_audio_dma_set);
+    object_class_property_set_description(klass, "laboratory-audio-dma",
+        "Explicit bounded audio TX DMA sink and functional completion IRQs");
+    object_class_property_set_description(klass, "native-nor-boot",
+        "Boot MAS from the NOR reset alias without image preloads; hold SLA off");
+    object_class_property_add_str(klass, "slave-runtime-fixture",
+                                  dual_slave_runtime_fixture_get,
+                                  dual_slave_runtime_fixture_set);
+    object_class_property_set_description(klass, "slave-runtime-fixture",
+        "Diagnostic-only SLA preload while MAS boots from NOR; not native SLA boot");
     object_class_property_add_bool(klass, "controller-battery-peer",
                                   dual_controller_battery_peer_get,
                                   dual_controller_battery_peer_set);
@@ -3728,6 +4162,7 @@ static void dual_machine_instance_init(Object *obj)
 static void dual_machine_finalize(Object *obj)
 {
     g_free(NIKON_Z72_DUAL(obj)->controller_firmware);
+    g_free(NIKON_Z72_DUAL(obj)->slave_runtime_fixture);
     g_free(NIKON_Z72_DUAL(obj)->master_boot_image);
     g_free(NIKON_Z72_DUAL(obj)->slave_boot_image);
     g_free(NIKON_Z72_DUAL(obj)->master_boot_aux);

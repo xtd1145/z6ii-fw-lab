@@ -44,7 +44,9 @@ static bool memory_range(Z72Memory *s, uint64_t address, uint32_t bytes,
         hwaddr translated, available = bytes;
         MemoryRegion *region = address_space_translate(&s->memory, address,
             &translated, &available, write, MEMTXATTRS_UNSPECIFIED);
-        if (!available || !memory_region_is_ram(region) ||
+        bool readable = memory_region_is_ram(region) ||
+                        (!write && memory_region_is_romd(region));
+        if (!available || !readable ||
             (write && memory_region_is_rom(region))) {
             return false;
         }

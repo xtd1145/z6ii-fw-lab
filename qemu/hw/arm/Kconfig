@@ -286,6 +286,7 @@ config NIKON_Z72_LAB
     depends on TCG && ARM
     select GENERIC_LOADER
     select ARM_GIC
+    select ARM_GICV5
     select ARM_V7M
     select STM32F2XX_TIMER
     select OR_IRQ
@@ -293,6 +294,10 @@ config NIKON_Z72_LAB
     select SSI
     select STM32F2XX_USART
     select SDHCI
+    select PCI_EXPRESS_DESIGNWARE
+    select NVME_PCI
+    select SPDM_SOCKET
+    select PFLASH_CFI02
 
 config ZYNQ
     bool

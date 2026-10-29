@@ -19,6 +19,7 @@
 #include "hw/core/qdev-properties.h"
 #include "hw/core/irq.h"
 #include "hw/core/resettable.h"
+#include "hw/pci/pci_bus.h"
 #include "migration/vmstate.h"
 #include "qom/object.h"
 
@@ -41,6 +42,7 @@ struct NikonZ72Timer {
     uint32_t tick_us;
     bool enabled;
     bool pcie_clock;
+    PCIBus *pcie_slot;
 };
 
 static void z72_timer_update_line(NikonZ72Timer *s)
@@ -85,6 +87,15 @@ static uint64_t z72_timer_read(void *opaque, hwaddr offset, unsigned size)
         memcpy(&request, s->storage + 4, 4);
         /* The original PCIe gate uses request bit 2 (active low) and
          * checks readiness in status bit 10. Completion is synchronous. */
+        if (s->pcie_slot) {
+            bool inserted = false;
+            for (unsigned i = 0; i < ARRAY_SIZE(s->pcie_slot->devices); i++) {
+                inserted |= s->pcie_slot->devices[i] != NULL;
+            }
+            /* Optional physical A-slot input: native1049FFDE tests this
+             * bit before starting PCIe, independently of clock requests. */
+            return (value & ~(1u << 10)) | (inserted ? 1u << 10 : 0);
+        }
         return (value & ~(1u << 10)) | ((request & 4) ? 0 : 1u << 10);
     }
     if (!s->enabled) {
@@ -185,6 +196,7 @@ static const Property z72_timer_properties[] = {
     DEFINE_PROP_UINT32("tick-us", NikonZ72Timer, tick_us, 1000),
     DEFINE_PROP_BOOL("tick-enabled", NikonZ72Timer, enabled, true),
     DEFINE_PROP_BOOL("pcie-clock", NikonZ72Timer, pcie_clock, false),
+    DEFINE_PROP_LINK("pcie-slot", NikonZ72Timer, pcie_slot, TYPE_PCI_BUS, PCIBus *),
 };
 
 static void z72_timer_init(Object *obj)
