@@ -48,3 +48,28 @@ cpu0 不在空转地址 `0x101034fc`）。相同字节的包只跑一次。
 
 失败项都是实验性探针/已知坏包（beep 原始版、noop、probeD、installprobe2、
 copyprobe、statuswriter 与对应容器），与早前的补丁矩阵结论一致；未见新增回归。
+
+## 2026-10-29 会话修复后复测
+
+### a09d95d5「固件多进程抓流」
+
+- 交付：`work/dx30_raw/deliverable/Z6_2_0170_poc_compressed.bin`（49,002,888 B，sha `afa1527a…`）
+  与独立 mas（38,750,138 B，sha `1b42ab7c…`）；补丁点 mas `+0x1091BF8`。
+- 冷启动 **PASS**：guest 2.51 s、上传 304、渲染 290、HUD 37；从容器解出的 mas 与独立 mas
+  哈希完全一致。
+- 端到端 UI：PHOTO SHOOTING MENU → NEF (RAW) recording → NEF (RAW) compression，
+  实测显示 `Lossless COMPRESSED`。
+- 性质：打包/K8 重签/启动验证包，不是 DX30/DX45 功能补丁；功能侧仍缺 SIF/TG 运行期映射。
+
+### 54ed5f2c「添加预拍摄」
+
+- 第一版 `Z6_2_0170_preshoot.bin` **FAIL**：状态块写在只读 mas 映射，QEMU 抓到
+  `Data Abort on CPU 1, DFSR 0x81d, DFAR 0x1002e280`，启动中断（GPU 0/0、双核空转）。
+- 修复版 `Z6_2_0170_preshoot_dram.bin` **PASS**：
+  - guest 2.43 s、上传 304、渲染 290、HUD 正常，无任何 Data Abort；
+  - `0xC5EFF000`：magic `0x5350365A`、count `0xF6`、retained 48、armed 1、
+    补码 `0xACAFC9A5`；
+  - `0xC5EFF100` 起描述符为 `{slot=2, arg0/arg1 指针, lr=0x10228BC3}`，冷启动即产生
+    ~246 条事件，说明钩子在正常启动路径上确实被调用；
+  - 旧状态地址 `0x1002E280` 保持全零，确认运行期不再写镜像区。
+- 已知限制：数据面未接（记录事件描述符而非像素）；trigger 槽位仍是假设。
