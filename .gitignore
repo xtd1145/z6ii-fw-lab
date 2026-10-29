@@ -1,2 +1,9 @@
 __pycache__/
 *.pyc
+.local/
+tools/src/
+tools/msys64/
+tools/python312/
+runtime/
+firmware/
+cards/

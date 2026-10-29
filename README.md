@@ -1,59 +1,27 @@
-# z6ii-fw-lab
+本目录是Z62模拟器的统一Windows原生实验主工程，保留第三方实验台并合入本地后续设备模型。
 
-尼康 Z6 II（EG1850 固件）系统级 QEMU 实验室：双核 A15 + Cortex-M4 的 machine 建模、
-浏览器实验台（导入固件 / 按键 / 抓屏 / 变体），以及补丁和启动稳定性脚本。
+# Z62 QEMU：2026-10-29 整合实验版
 
-**本仓库不包含任何尼康固件、NOR 转储或 SD 卡镜像**，只包含 QEMU 侧代码与实验脚本。
+从[启动实验台.cmd](启动实验台.cmd)进入Egolite操作页；输入已配置，点击“启动模拟器”，等待约1–2分钟。MENU、方向键和OK按住时间保持2秒。日常运行使用本目录`runtime/qemu-system-arm.exe`，无需WSL。
 
-## 目录
+| 内容 | 入口 |
+|---|---|
+| 本轮改动、失败和剩余问题 | [整合进展](docs/整合进展-20261029.md) |
+| 结构化测试结果 | [验收记录](docs/integration-verification-20261029.json) |
+| 原厂NOR菜单与导航 | [验证原厂NOR菜单.cmd](验证原厂NOR菜单.cmd) |
+| 原厂声音诊断 | [验证快门声.cmd](验证快门声.cmd) |
+| 已保存授权的只读验证 | [验证已保存授权.cmd](验证已保存授权.cmd) |
+| 重建Windows版本 | `python -B tools/build.py --jobs 8` |
+| 源码覆盖层 | `qemu/hw/arm/`、`qemu/system/`、`qemu/host-compat.patch` |
+| 第三方原始说明 | [fc693ad原说明](docs/upstream-README-fc693ad.md) |
+| 旧本地工程 | [../z62-qemu/](../z62-qemu/) |
 
-- `qemu/hw/arm/` — 自研 machine `nikon-z6ii` 与 `nikon-z62-dual-lab` 及设备模型，
-  按 QEMU 11.1.2 的 `hw/arm` 目录组织（GPL-2.0-or-later）；`Kconfig` / `meson.build`
-  是对应版本的注册文件。
-- `qemu/system/` — `physmem.c` / `memory.c` 的实验钩子（`Z62_WLOG` 等，默认关闭）。
-- `z62_webui/` — 标准库实现的本地实验台：`python z62_webui/console.py --port 8642`。
-- `work/` — soak 与补丁分析脚本；`docs/` — 整合方案与说明。
-- `work/soak_stock.py` — 启动稳定性测试：每遍等客体时间 ≥ 2.4 s，判定 GPU 上传 ≥ 250、
-  渲染命令 ≥ 200、画面非黑采样 > 50、cpu0 不在空转地址。
+已验证原厂菜单、NOR菜单导航、声音诊断38400字节精确输出、原厂授权保存与独立新进程只读复核；六组设备测试通过。RAW同进程复核及普通无追踪模式仍有2013 I/O失败，原始失败保留；授权诊断入口显式启用NVMe追踪，不宣称稳定解锁或真实RAW外录完成。自然快门声、真实取景/拍照/录像、完整SLA原厂冷启动仍未实现。
 
-## 构建
+错误列表清除是标出的实验选项；原厂NOR模式不使用该清除或资源版本RAM补件。第三方未提供单引擎`nikon_z6ii.c`，本地使用双引擎`nikon-z62-dual-lab`。
 
-1. 取 QEMU 11.1.2 源码树（arm-softmmu 即可）。
-2. 把本仓库 `qemu/hw/arm/` 下的 `nikon-*` 文件拷入源码树 `hw/arm/`，用仓库内的
-   `Kconfig`、`meson.build` 覆盖同名文件；`qemu/system/` 的两个文件同理覆盖。
-3. 配置并编译：
+来源：xtd1145/z6ii-fw-lab固定提交`fc693ad51376e47fd2d5afcbc7da737673ffc781`与本地R3.1后续成果；原R3.1发布ZIP及旧工程保留，后续开发集中于本目录。GPL来源与声明见[NOTICE.md](NOTICE.md)。
 
-```
-mkdir build && cd build
-../configure --target-list=arm-softmmu --disable-werror
-ninja qemu-system-arm.exe
-```
+## 此分支的公开范围
 
-## 快速启动
-
-双击仓库根目录的 `启动实验台.cmd`（或桌面快捷方式“Z6II 实验台”）：
-检测 8642 端口，未运行则后台拉起控制台，然后打开 `http://127.0.0.1:8642/`。
-`停止实验台.cmd` 会结束控制台与 QEMU。
-
-启动前在界面里选好“参数组”：
-
-- **实验室（出 HUD）**：默认，取景界面正常出画面；
-- **上传 / NOR 提取**：从真机 NOR 导入的参数组，走真参数启动路径，取景可能全黑。
-
-## 运行
-
-```
-python z62_webui/console.py --port 8642
-```
-
-浏览器打开 `http://127.0.0.1:8642`，导入 mas/sla/controller 镜像后启动。
-实验室参数组与 NOR 属于本地内容，不进仓库。
-
-## 状态
-
-- stock C1.70：可启动到取景 HUD、打开相机菜单、方向键与 OK 子菜单可用。
-- 启动稳定性：100 遍冷启动 soak **100/100 通过**（见 `SOAK.md` 与 `results/soak100.json`）。
-- 补丁包：29 个 master/容器逐包启动 **18 通过**，明细见 `PATCH_TESTS.md`
-  与 `results/variants_try.json`；预拍摄钩子包（`54ed5f2c`）可启动并出 HUD。
-- 菜单模型：文案实时取自 mas 的 UTF-16 字符串区；运行期菜单在打开时整体重建。
-- 仅用于自有设备的互操作与固件研究实验。
+本分支提交源码、脚本、许可证与经过序列号脱敏的验收记录。`runtime/`、`firmware/`、`cards/`、便携工具链和`.local/`私人运行数据不上传；克隆后需自行构建运行环境，并通过实验台准备自己的固件、NOR参数与虚拟卡。上文“输入已配置”描述原本地工作区，不表示仓库携带这些输入。原始本地验收报告保持不变。
