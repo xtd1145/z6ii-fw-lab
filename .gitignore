@@ -1,0 +1,74 @@
+# 固件与镜像素材：只收代码，不收固件
+all_modules/
+*.bin
+*.bi
+*.dec
+*.obs.dec
+*.pkl
+Z6_2_0170*
+
+# 会话与本地状态
+.local/
+.workbuddy/
+__pycache__/
+*.pyc
+dist/
+
+# ---- 密钥与签名材料，绝不入库 ----
+key.json
+work/k8/
+**/*.secret
+**/*.local
+.env
+
+# 历史 K8 明文（其他会话的脚本，待改为 Z6II_K8 环境变量后解除）
+k8.json
+work/preshoot_build/build_pkg.py
+work/preshoot_build/verify_patch.py
+work/shutter/NOTES.md
+工程打包说明.md
+
+# ---- 固件镜像与解包素材：体积大，不入库 ----
+fw_verified/
+extracted/
+fw_single/
+fw_set/
+ref_fw/
+releases/
+runs/
+all_modules/
+
+# ---- 工具链与构建产物 ----
+tools/msys64/
+tools/src/qemu/build/
+
+# ---- 实验运行产物：脚本入库，结果不入库 ----
+work/qemu_build/run/
+**/*.ppm
+**/*.trace
+**/*.log
+**/*.bin
+
+# ---- 仓库只收「我们写的」，不收上游源码与工具链 ----
+# QEMU 源码树整体排除，只放行 hw/arm 下的 nikon-* 改动
+tools/*
+!tools/src/
+tools/src/*
+!tools/src/qemu/
+tools/src/qemu/*
+!tools/src/qemu/hw/
+tools/src/qemu/hw/*
+!tools/src/qemu/hw/arm/
+tools/src/qemu/hw/arm/*
+!tools/src/qemu/hw/arm/nikon-*
+
+# work 下只保留探针脚本，其余为实验数据
+work/*
+!work/qemu_build/
+!work/capture_service_static/
+
+# 上游参考仓库打包与 LUT 输出
+nikon-z62-qemu.zip
+probes/*/out/
+*.cube
+z6ii_fw_工程打包_*.zip

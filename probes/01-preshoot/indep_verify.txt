@@ -1,0 +1,62 @@
+loaded Z6_2_0170/_tpj01_v140.bin  len=0xe002
+loaded Z6_2_0170/eg1850_mas_01700  len=0x24f47ba
+loaded Z6_2_0170/eg1850_sla_01700  len=0x86c4c2
+loaded Z6_2_0170/ex1850_012000.bi  len=0x80002
+loaded Z6_2_0170/vr1850_010100.bi  len=0xccc08
+loaded Z7_2_0170/_tpj01_v140.bin  len=0xe002
+loaded Z7_2_0170/eg1840_mas_01700  len=0x2477b7a
+loaded Z7_2_0170/eg1840_sla_01700  len=0x86cd42
+loaded Z7_2_0170/ex1840_013000.bi  len=0x80002
+loaded Z7_2_0170/vr1840_010100.bi  len=0xccc08
+loaded Z_50_0260/_tpt01_0091.bin  len=0xaab4
+loaded Z_50_0260/eg1630_026000.bi  len=0x1df303a
+loaded Z_50_0260/ex1630_021000.bi  len=0x80002
+loaded Z_6_0380/_tpj01_v140.bin  len=0xe002
+loaded Z_6_0380/eg1620_038000.bi  len=0x1ff367a
+loaded Z_6_0380/ex1620_037000.bi  len=0x80002
+loaded Z_6_0380/vr1620_010200.bi  len=0xccc08
+loaded Z_8_0311/_tpj01_0210.bin  len=0xe002
+loaded Z_8_0311/eg2070_0311b0.bi  len=0x4e0495f
+loaded Z_8_0311/ex2070_030000.bi  len=0x80002
+loaded Z_8_0311/li2070_0311b0.bi  len=0xf17002
+loaded Z_8_0311/vr2070_010100.bi  len=0xccc08
+
+== 1. 'Pre-release' as UTF-16LE and as ASCII
+   utf16: total 6
+      Z_8_0311       eg2070_0311b0.bi        6  ['0x31568e0', '0x31610d0', '0x33a489c', '0x33ae8aa', '0x33ae8e4', '0x33aea0a']
+   ascii: total 0
+
+== 2. C60 / C30 / C120 tokens (utf16 exact + ascii with word boundary)
+   C60   utf16: {'Z_8_0311/eg2070_0311b0.bi': 36}
+   C60   ascii: {}
+   C30   utf16: {'Z_8_0311/eg2070_0311b0.bi': 36}
+   C30   ascii: {}
+   C120  utf16: {'Z_8_0311/eg2070_0311b0.bi': 36}
+   C120  ascii: {}
+
+== 3. read the claimed Z8 anchor 0x031568e0 and its neighbours
+   Pre-release burst      eg2070_0311b0./0x031568e0  u16='Pre-release burstNonePost-release burstM'  ascii='P.r.e.-.r.e.l.e.a.s.e. .b.u.r.s.t.N.o.n.e.P.o.s.'
+   C60                    eg2070_0311b0./0x031568da  u16='C60Pre-release burstNonePost-release bur'  ascii='C.6.0.P.r.e.-.r.e.l.e.a.s.e. .b.u.r.s.t.N.o.n.e.'
+   Post-release burst     eg2070_0311b0./0x0315690a  u16='Post-release burstMax.High fps viewfinde'  ascii='P.o.s.t.-.r.e.l.e.a.s.e. .b.u.r.s.t.M.a.x...H.i.'
+   High fps viewfinder    eg2070_0311b0./0x03156936  u16='High fps viewfinder displaySave focus po'  ascii='H.i.g.h. .f.p.s. .v.i.e.w.f.i.n.d.e.r. .d.i.s.p.'
+   title variant          eg2070_0311b0./0x033a489c  u16='Pre-release Burstไม่มีPost-release Burst'  ascii='P.r.e.-.r.e.l.e.a.s.e. .B.u.r.s.t.D.!.H.!.5.P.o.'
+   CAPSVC                 eg2070_0311b0./0x0242e730  u16='ꇱ뉱ⱶ\ua636ꘌ㒂⥻ꛖ㑀鴠ꕭ◅⡘ⰺ\u2feb⛐걍그マ⣲⩴긲⥩꪿ꑒ⁴겜镑ꍺ⹁⡳걃ꭱẻ⡏⮏\u2e6a⭥Ꞿꚭ'  ascii='..q.v,6....4{)..@4 .m..%X(:,./.&M....0.(t*2.i)..'
+   HSFCPROC               eg2070_0311b0./0x04cce4f1  u16='午䍆剐䍏\x00\x00\x00Ā\x00ᰀ\x00\x00 \x00䉐䵐䥁N\x00\x00\x00Ā\x00\u2000\x00\x00 \x00䉐卐䉕\x00\x00\x00\x00Ȁ\x00᠀\x00\x00'  ascii='HSFCPROC................ ...PBPMAIN............ '
+   CAPLV                  eg2070_0311b0./0x04cceabd  u16='䅃䱐V\x00\x00\x00\x00Ȁ\x00ᴀ\x00\x00 \x00坁B\x00\x00\x00\x00\x00Ā\x00ሀ\x00\x00 \x00剖䅃䍌\x00\x00\x00\x00Ȁ\x00ᴀ\x00\x00'  ascii='CAPLV................... ...AWB.................'
+   SHTSND                 eg2070_0311b0./0x04cce4d5  u16='䡓協䑎\x00\x00\x00\x00Ȁ\x00᠀\x00\x00\x10\x00午䍆剐䍏\x00\x00\x00Ā\x00ᰀ\x00\x00 \x00䉐䵐䥁N\x00\x00\x00Ā\x00\u2000\x00\x00'  ascii='SHTSND......................HSFCPROC............'
+   CSQDFL region          eg2070_0311b0./0x04ce5006  u16='千䑑䱆\u3130䌀兓䙄が2千䑑䱆㌰䌀兓䙄が4千䑑塍\u3130䌀兓䵄じ2千䑑塍㌰䌀兓䵄じ4千䑑塍㔰'  ascii='CSQDFL01.CSQDFL02.CSQDFL03.CSQDFL04.CSQDMX01.CSQ'
+   Z8 cmd pool            eg2070_0311b0./0x0295b470  u16='潎啴敳\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00效摡牥\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00ꥈʂ\n\x00'  ascii='NotUse..................................Header..'
+   help text              eg2070_0311b0./0x03161000  u16='; 60p/50p".\n\ue62c\ue62d\nChoose for improved video'  ascii=';. .6.0.p./.5.0.p.".....,.-...C.h.o.o.s.e. .f.o.'
+
+== 4. CSQ* tokens per module
+   Z_8_0311       eg2070_0311b0.bi       ascii=10    utf16prefix=0
+   (modules not listed have zero CSQ hits)
+
+== 5. Z6II claimed call-site 0x10379f64 (as vma -> file, and as raw file off)
+   eg1850_mas_01700       vma-0x10000000   0x0379f64: -..O.M...F..O............... ......I...H'....H...I.0'....H...I.0
+      CSEQEV   utf16=0 []  ascii=4 ['0x24e4e8', '0x2cc86c', '0x37a33c', '0x37a348']
+      CSEQAL   utf16=0 []  ascii=5 ['0x24e4d8', '0x2ab238', '0x37a354', '0x37a368']
+      CSEQMX   utf16=0 []  ascii=2 ['0x37a394', '0x37a3a0']
+      CSEQFL   utf16=0 []  ascii=1 ['0x37a388']
+      CAPSVC   utf16=0 []  ascii=1 ['0x242e730']
+   eg1850_sla_01700       vma-0x10000000   0x0379f64: A.A.B.B.C.D.D.E.E.F.F.G.G.H.H.I.I.J.J.K.K.K.L.L.L.M.M.N.N.N.O.O.

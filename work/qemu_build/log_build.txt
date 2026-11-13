@@ -1,0 +1,8 @@
+##### configure #####
+Using './build' as the directory for build output
+python determined to be '/ucrt64/bin/python.exe'
+python version: Python 3.14.9
+D:/z6ii_fw_lab/tools/msys64/ucrt64/bin/python.exe: can't open file 'D:/d/z6ii_fw_lab/tools/src/qemu/python/scripts/mkvenv.py': [Errno 2] No such file or directory
+
+ERROR: python venv creation failed
+

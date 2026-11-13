@@ -1,0 +1,60 @@
+<div style="font-family:-apple-system,'Segoe UI',Noto Sans CJK SC,sans-serif;background:#0f1115;color:#e6e9ef;padding:22px;border-radius:14px;max-width:1180px">
+<h2 style="margin:0 0 4px;font-size:21px;color:#fff">Z6 II 原版固件：双 EXPEED 6 工作流判定</h2>
+<p style="margin:0 0 16px;font-size:12.5px;color:#8b95a8">数据源 Z6_2_0170.bin（只读，SHA-256 5a9640b4…f8f9d06d）· 容器 5 组件 · 证据均为本轮实测</p>
+
+<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;font-size:11.5px">
+<span style="background:#12351f;border:1px solid #2e7d4f;padding:3px 9px;border-radius:20px;color:#7fe0a5">■ 已证（有字节/地址）</span>
+<span style="background:#3a2b10;border:1px solid #a8791f;padding:3px 9px;border-radius:20px;color:#f0c674">■ 推断（由地址布局/字符串密度导出）</span>
+<span style="background:#1b2334;border:1px solid #3b5bdb;padding:3px 9px;border-radius:20px;color:#8bb8ff">■ 待运行期确认</span>
+</div>
+
+<div style="display:grid;grid-template-columns:132px 1fr 1fr 1fr 1fr;gap:6px;font-size:11.8px">
+<div style="background:#161a22;padding:8px;border-radius:8px;color:#7f8aa0;font-weight:700">阶段</div>
+<div style="background:#161a22;padding:8px;border-radius:8px;color:#e8b33a;font-weight:700">E6 #1 · eg1850_mas<br><span style="color:#7f8aa0;font-weight:400">38.75 MB @0x10000000</span></div>
+<div style="background:#161a22;padding:8px;border-radius:8px;color:#5bc8f5;font-weight:700">E6 #2 · eg1850_sla<br><span style="color:#7f8aa0;font-weight:400">8.83 MB @0x124F47BA</span></div>
+<div style="background:#161a22;padding:8px;border-radius:8px;color:#b78bf0;font-weight:700">协处理器 · ex1850<br><span style="color:#7f8aa0;font-weight:400">524 KB @0xC1000000</span></div>
+<div style="background:#161a22;padding:8px;border-radius:8px;color:#6fd0a0;font-weight:700">vr1850 / _tpj01<br><span style="color:#7f8aa0;font-weight:400">839 KB / 57 KB</span></div>
+
+<div style="background:#1b2029;padding:8px;border-radius:8px;color:#8b95a8">1 容器校验</div>
+<div style="background:#12351f;border-left:3px solid #2e7d4f;padding:8px;border-radius:6px"><b>FirmwareChkLib 主执行体</b><br><span style="color:#7fe0a5">0x10392284</span> 算 SHA1(body‖K8)；ctx=<span style="color:#7fe0a5">0xc2b2b608</span>；门控 <span style="color:#8bb8ff">[0xc1887bc0]</span> 2/4→查摘要，否则走 <span style="color:#7fe0a5">0x1037e886</span> CRC-only</div>
+<div style="background:#2a2113;border-left:3px solid #a8791f;padding:8px;border-radius:6px">同名库的第二份副本（字符串计数与 mas 全等：FirmwareChk×2、memdump×2）<br>→ 从核在升级时接收自身镜像，不自行裁决</div>
+<div style="background:#1b2029;padding:8px;border-radius:8px;color:#8b95a8">被动：其 payload 由主核派发</div>
+<div style="background:#1b2029;padding:8px;border-radius:8px;color:#8b95a8">被动：component type 字节 @<span style="color:#7fe0a5">0xc25d887c+0xc</span></div>
+
+<div style="background:#1b2029;padding:8px;border-radius:8px;color:#8b95a8">2 启动</div>
+<div style="background:#12351f;border-left:3px solid #2e7d4f;padding:8px;border-radius:6px">首 4 字节 <span style="color:#7fe0a5">ea002f20</span> = <code>B 0x5F40</code>，随后 "Ver.01.70.02"；<b>先于 sla 加载</b>（body 0x8e0d4 在 0x264f496 之前）</div>
+<div style="background:#12351f;border-left:3px solid #2e7d4f;padding:8px;border-radius:6px">同一启动序言（也 <code>ea002f20</code> + 同版本串）但链接基址=<b>mas 的末地址</b> → 由主核装载并放行</div>
+<div style="background:#2a2113;border-left:3px solid #a8791f;padding:8px;border-radius:6px">自带 <span style="color:#7fe0a5">gic 0xc10010b3</span>（中断控制器）与 <span style="color:#7fe0a5">directuart 0xc100115b</span> → 独立 CPU 实体，非 mas 的一部分</div>
+<div style="background:#1b2029;padding:8px;border-radius:8px;color:#8b95a8">NikonBVR 头标 <span style="color:#7fe0a5">00004e696b6f6e42</span></div>
+
+<div style="background:#1b2029;padding:8px;border-radius:8px;color:#8b95a8">3 地址空间</div>
+<div style="background:#12351f;border-left:3px solid #2e7d4f;padding:8px;border-radius:6px;grid-column:2/6"><b>单一带共享映射的 SMP/AMP 混合，而非两片独立内存</b><br>mas 代码段→sla 区函数指针 <span style="color:#7fe0a5">2100</span> 个（0x124fe9d2…带 Thumb 位）；sla→mas <span style="color:#7fe0a5">8268</span> 个<br>共享窗口：0xC0xxxxxx 外设/邮箱 mas <span style="color:#7fe0a5">99515</span> / sla <span style="color:#7fe0a5">14288</span>；0x40xxxxxx MMIO mas <span style="color:#7fe0a5">135208</span> / sla <span style="color:#7fe0a5">35948</span></div>
+
+<div style="background:#1b2029;padding:8px;border-radius:8px;color:#8b95a8">4 运行期分工</div>
+<div style="background:#2a2113;border-left:3px solid #a8791f;padding:8px;border-radius:6px"><b>决策与IO核</b>：拍摄模式记录 ×6（Still/StillSilent/LvStill/LvStillSilent/LvMovieRec/LvMovie，@<span style="color:#7fe0a5">0x119df50c</span> 步长 0x480）· 读出模式表 <span style="color:#7fe0a5">0x92cf50</span>（18条）· 画角几何 <span style="color:#7fe0a5">0x19a58a8..0x19a5c58</span> · AF_ ×15 · interval ×6 · Card ×25 · LCD · 写卡与缓存记账</div>
+<div style="background:#2a2113;border-left:3px solid #a8791f;padding:8px;border-radius:6px"><b>像素与编码核</b>：MMIO 直写密度相对更高（35948/8.8MB ≈ 4.1k/MB，mas ≈ 3.5k/MB）· JPEG/H264/NikonD 与 mas 同数 → 同一份 codec 库的第二实例 · 无 Card/无菜单串 → 不做用户交互</div>
+<div style="background:#2a2113;border-left:3px solid #a8791f;padding:8px;border-radius:6px"><b>机身实时核</b>：快门帘/反光镜/肩屏段码/闪光灯时序；调试 CLI 独立（help·directuart·stackdump·cliloglevel）</div>
+<div style="background:#2a2113;border-left:3px solid #a8791f;padding:8px;border-radius:6px"><b>防抖与辅助 MCU</b>：vr=陀螺仪/镜头补偿环路，_tpj01=第二微（ARM 分支表头）</div>
+
+<div style="background:#1b2029;padding:8px;border-radius:8px;color:#8b95a8">5 一次按快门的跨核流水</div>
+<div style="background:#12351f;padding:8px;border-radius:6px;grid-column:2/6">
+<span style="color:#e8b33a">E6#1 主</span> 测光/AF 决策 + 向传感器发读出模式 id（表 0x92cf50）→ AFE/ISP 数据经 <span style="color:#e8b33a">E6#2 从</span> 做降噪/缩放/JPEG·H.264 编码 → 回 <span style="color:#e8b33a">E6#1</span> 写卡（Card×25）与缓存回收 → 同期 <span style="color:#b78bf0">ex</span> 驱动快门帘/反光镜/肩屏，<span style="color:#6fd0a0">vr</span> 出补偿量 → 邮箱全部落在 <span style="color:#7fe0a5">0xC0xxxxxx</span> 共享窗
+</div>
+
+<div style="background:#1b2029;padding:8px;border-radius:8px;color:#8b95a8">6 升级派发</div>
+<div style="background:#12351f;padding:8px;border-radius:6px;grid-column:2/6">主核遍历 12 字节派发记录（计数器上限 <span style="color:#7fe0a5">0x32</span>），按 component type（实测 2/3/4/5/8/9/0xe/0x11）分别落到各核目标地址；成功后对 type∈{2,3,4,9,0x11} 剥去尾 2 字节 CRC，再 <span style="color:#7fe0a5">tbb</span> 17 路跳转写类型字节 · 校验序 = 模块 CRC（crc_hqx(mod[:-2]) BE16）→ 包 CRC（body[-16]）→ 头部 SHA1</div>
+</div>
+
+<h3 style="margin:20px 0 8px;font-size:15px;color:#fff">判定与纠错</h3>
+<table style="width:100%;border-collapse:collapse;font-size:12px">
+<tr style="background:#161a22;color:#8b95a8;text-align:left"><th style="padding:7px">命题</th><th style="padding:7px">结论</th><th style="padding:7px">关键证据</th></tr>
+<tr style="border-bottom:1px solid #232833"><td style="padding:7px">"双 EXPEED 6" = 两份 eg 应用镜像</td><td style="padding:7px;color:#7fe0a5">成立</td><td style="padding:7px">eg1850_mas + eg1850_sla 同版本串、同启动序言、各自一套 CLI/校验库</td></tr>
+<tr style="border-bottom:1px solid #232833"><td style="padding:7px">两颗 E6 内存互相隔离</td><td style="padding:7px;color:#ff8f8f">不成立</td><td style="padding:7px">sla 基址 = mas 末址 0x124F47BA；双向函数指针 2100 / 8268</td></tr>
+<tr style="border-bottom:1px solid #232833"><td style="padding:7px">mas/sla 是同一程序的副本</td><td style="padding:7px;color:#ff8f8f">不成立</td><td style="padding:7px">mas 独有 Card×25/菜单/几何/模式记录；sla 独有更高 MMIO 密度且无 IO 串</td></tr>
+<tr style="border-bottom:1px solid #232833"><td style="padding:7px">ex 只是 mas 的一段</td><td style="padding:7px;color:#ff8f8f">不成立</td><td style="padding:7px">ex 代码 VMA 0xC1000000、自带 gic/directuart，MMIO 聚类 0x40000000+n·0x400</td></tr>
+<tr style="border-bottom:1px solid #232833"><td style="padding:7px">0x11990dec 是组件派发表</td><td style="padding:7px;color:#ff8f8f">先前提取错误，本轮否证</td><td style="padding:7px">内容是 0x06040200/0x0e0c0a08… 递增索引与定点系数，非 {ptr,type}</td></tr>
+<tr><td style="padding:7px">120fps 静态管线属"改表"可解</td><td style="padding:7px;color:#8bb8ff">未定</td><td style="padding:7px">读出模式 id 63=1080p120 已在表中，但 6 个模式记录块镜像内非零字节仅 3–7 个，须转储判定间接层</td></tr>
+</table>
+
+<p style="margin:16px 0 0;font-size:12px;color:#8b95a8">影响下一步的唯一未知量仍是 <b>[0xc1887bc0]</b>：2/4 → SD 升级强制头部 SHA1，必须先只读取 K8（ctx 0xc2b2b608+0x34）；其余值 → 等长重封包只需模块 CRC，无需任何密钥。</p>
+</div>

@@ -1,0 +1,127 @@
+{
+ "date": "2026-11-09",
+ "instruments": {
+  "honest": {
+   "file": ".local/af_real/ref_honest.jsonl",
+   "on_target_pct": 98.3,
+   "false_lock_pct": 0.6,
+   "silent": 9,
+   "subject_frames": 825,
+   "negative_frames": 1078
+  },
+  "holdout_camera": {
+   "file": ".local/af_real/coco_ref_camholdout.jsonl",
+   "on_target_pct": 97.8,
+   "false_lock_pct": 8.0,
+   "silent": 3,
+   "subject_frames": 135,
+   "negative_frames": 1170,
+   "note": "negative side is the uncleaned 1170-frame pool; gate+human verification puts the true false-lock rate near 0.7%"
+  }
+ },
+ "detector_honest_instrument": {
+  "af_st_n160-2": {
+   "on_target_pct": 96.1,
+   "false_lock_pct": 10.9,
+   "silent": 16,
+   "subject_frames": 825,
+   "negative_frames": 1078
+  },
+  "af_st_n160": {
+   "on_target_pct": 96.1,
+   "false_lock_pct": 10.9,
+   "silent": 16,
+   "subject_frames": 825,
+   "negative_frames": 1078
+  },
+  "af_st_n640": {
+   "on_target_pct": 91.9,
+   "false_lock_pct": 1.2,
+   "silent": 26,
+   "subject_frames": 825,
+   "negative_frames": 1078
+  },
+  "af_st_s160": {
+   "on_target_pct": 94.8,
+   "false_lock_pct": 9.0,
+   "silent": 19,
+   "subject_frames": 825,
+   "negative_frames": 1078
+  },
+  "af_v9b": {
+   "on_target_pct": 98.1,
+   "false_lock_pct": 0.4,
+   "silent": 9
+  },
+  "af_v9c": {
+   "on_target_pct": 98.3,
+   "false_lock_pct": 0.6,
+   "silent": 9,
+   "subject_frames": 825,
+   "negative_frames": 1078
+  }
+ },
+ "af_decision_layer": {
+  "selftest": "12 checks / 0 failures",
+  "fallback_on": {
+   "hit_pct": 96.5,
+   "wrong_tier_pct": 0.0,
+   "abstain_pct": 1.7,
+   "false_lock_pct": 4.5,
+   "precision_pct": 92.7,
+   "fallback_fired": 40
+  },
+  "fallback_off": {
+   "hit_pct": 96.5,
+   "wrong_tier_pct": 0.0,
+   "abstain_pct": 1.7,
+   "false_lock_pct": 0.7,
+   "precision_pct": 97.2,
+   "fallback_fired": 0
+  }
+ },
+ "gate_R5": {
+  "fitted_on_human_answers": 60,
+  "confirm_bucket_precision_pct": 90.0,
+  "camera_spot_check": "20/20 human agreed",
+  "teacher_misses_found_by_human": "26/26",
+  "negative_pool_contamination": "103/115 fired frames actually contain a subject"
+ },
+ "e6": {
+  "nn_runtime": "absent (0 CDNN/neural/tensor hits across all EXPEED6 bodies)",
+  "budget_tier1": {
+   "mmac_per_frame": 6,
+   "weights_kib": 8,
+   "activations_kib": 20
+  },
+  "budget_tier2": {
+   "mmac_per_frame": 25,
+   "weights_kib": 128
+  },
+  "smallest_off_the_shelf": {
+   "model": "yolo11n@160",
+   "params": 2590425,
+   "mmac_per_frame": 203,
+   "over_tier2_by": 8.1
+  }
+ },
+ "injection": {
+  "verdict": "not implementable as shipped; one re-signable patch away",
+  "buffer_runtime_va": "0xc2967df4",
+  "records": 4,
+  "record_bytes": 24,
+  "survival_ms": "16.7-33.3",
+  "class_field": "none (mode {1,2} only)"
+ },
+ "qemu": {
+  "repeats": 10,
+  "pass": 10,
+  "report": ".local/webui/soak_af10b.json",
+  "note": "verifies the platform only, not AF accuracy"
+ },
+ "labels": {
+  "human_label_files": 329,
+  "camera_origin_labelled_frames": 51
+ },
+ "instrument_warning": "tables in AF_FINDINGS.md section 3 mix the original COCO-only instrument (825/1170) and the honest instrument (825/1078); rows are not comparable across them"
+}

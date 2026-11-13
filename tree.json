@@ -1,0 +1,78 @@
+{
+  "sha": "33426e892afd329a3b366b73776bcf53b9ac4ee8",
+  "url": "https://api.github.com/repos/WonderLantern/nikon-fw-key-tool/git/trees/33426e892afd329a3b366b73776bcf53b9ac4ee8",
+  "tree": [
+    {
+      "path": ".gitignore",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "62965aace9c9a9fc9493e460c327f7d9858e967b",
+      "size": 101,
+      "url": "https://api.github.com/repos/WonderLantern/nikon-fw-key-tool/git/blobs/62965aace9c9a9fc9493e460c327f7d9858e967b"
+    },
+    {
+      "path": "LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f288702d2fa16d3cdf0035b15a9fcbc552cd88e7",
+      "size": 35149,
+      "url": "https://api.github.com/repos/WonderLantern/nikon-fw-key-tool/git/blobs/f288702d2fa16d3cdf0035b15a9fcbc552cd88e7"
+    },
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6c3188e62306d6032e818af51e3ebf05fa01387a",
+      "size": 9898,
+      "url": "https://api.github.com/repos/WonderLantern/nikon-fw-key-tool/git/blobs/6c3188e62306d6032e818af51e3ebf05fa01387a"
+    },
+    {
+      "path": "decrypt_firmware.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "14128ca1240542634554945458b128b8b93c8f26",
+      "size": 9754,
+      "url": "https://api.github.com/repos/WonderLantern/nikon-fw-key-tool/git/blobs/14128ca1240542634554945458b128b8b93c8f26"
+    },
+    {
+      "path": "extract_key.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "474941036131b2388135688db86d8533e59f1b92",
+      "size": 14643,
+      "url": "https://api.github.com/repos/WonderLantern/nikon-fw-key-tool/git/blobs/474941036131b2388135688db86d8533e59f1b92"
+    },
+    {
+      "path": "repack_firmware.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7116031a8157bce1bd01073b5989f41fcbd16a93",
+      "size": 14965,
+      "url": "https://api.github.com/repos/WonderLantern/nikon-fw-key-tool/git/blobs/7116031a8157bce1bd01073b5989f41fcbd16a93"
+    },
+    {
+      "path": "solve_signature_e7.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c56f5be5bfc33d3e435e9b7c813f94f5ec097d3b",
+      "size": 8095,
+      "url": "https://api.github.com/repos/WonderLantern/nikon-fw-key-tool/git/blobs/c56f5be5bfc33d3e435e9b7c813f94f5ec097d3b"
+    },
+    {
+      "path": "tests",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "c2d83eca6053bc96574375427dd30b34778ed2df",
+      "url": "https://api.github.com/repos/WonderLantern/nikon-fw-key-tool/git/trees/c2d83eca6053bc96574375427dd30b34778ed2df"
+    },
+    {
+      "path": "tests/test_validation.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fee4ae0f62f1272a5eda45e2586d9d166e13f6d8",
+      "size": 11095,
+      "url": "https://api.github.com/repos/WonderLantern/nikon-fw-key-tool/git/blobs/fee4ae0f62f1272a5eda45e2586d9d166e13f6d8"
+    }
+  ],
+  "truncated": false
+}

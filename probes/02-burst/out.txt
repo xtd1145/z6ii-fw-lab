@@ -1,0 +1,119 @@
+DX 45/30 feasibility -- engine: sim_core_alloc v2 (150-run battery clean)
+provisioned stills line = 340.72 MP/s | encoder model = 400 MP/s | pool = 600 MB
+
+[1] per-window readout arithmetic (fps vs line rate)
+    win    MP                fps      MP/s   x line   verdict
+    DXL    10.328             30     309.8    0.91x   within line
+    DXL    10.328             45     464.8    1.36x   OVER LINE 1.36x -> needs a readout mode the image never provisions
+    DXL    10.328             60     619.7    1.82x   OVER LINE 1.82x -> needs a readout mode the image never provisions
+    DX169  8.722              30     261.7    0.77x   within line
+    DX169  8.722              45     392.5    1.15x   OVER LINE 1.15x -> needs a readout mode the image never provisions
+    DX169  8.722              60     523.3    1.54x   OVER LINE 1.54x -> needs a readout mode the image never provisions
+    DXM    5.794              30     173.8    0.51x   within line
+    DXM    5.794              45     260.7    0.77x   within line
+    DXM    5.794              60     347.6    1.02x   OVER LINE 1.02x -> needs a readout mode the image never provisions
+    DXS    2.582              30      77.5    0.23x   within line
+    DXS    2.582              45     116.2    0.34x   within line
+    DXS    2.582              60     154.9    0.45x   within line
+
+[2] payload / card / burst gates
+    fps   win            fmt   MB/fr      MB/s  card verdict              burst
+    30    DXL         JPG Fine    7.00     210.0  fits SD UHS-II,CFe Type B,CFe B (top)       85
+    30    DXL         JPG Norm    4.00     120.0  fits SD UHS-II,CFe Type B,CFe B (top)      150
+    30    DXL         JPG Basic    2.20      66.0  fits SD UHS-II,CFe Type B,CFe B (top)      272
+    30    DXL         RAW 14bit   20.70     621.0  fits CFe B (top)             28
+    30    DXL         RAW lossless   11.50     345.0  fits CFe Type B,CFe B (top)       52
+    30    DXL         RAW hi-eff    8.00     240.0  fits CFe Type B,CFe B (top)       75
+    30    DXM         JPG Fine    4.00     120.0  fits SD UHS-II,CFe Type B,CFe B (top)      150
+    30    DXM         JPG Norm    2.30      69.0  fits SD UHS-II,CFe Type B,CFe B (top)      260
+    30    DXM         JPG Basic    1.30      39.0  fits SD UHS-II,CFe Type B,CFe B (top)      461
+    30    DXM         RAW 14bit   11.60     348.0  fits CFe Type B,CFe B (top)       51
+    30    DXM         RAW lossless    6.40     192.0  fits SD UHS-II,CFe Type B,CFe B (top)       93
+    30    DXM         RAW hi-eff    4.50     135.0  fits SD UHS-II,CFe Type B,CFe B (top)      133
+    30    DXS         JPG Fine    1.90      57.0  fits SD UHS-II,CFe Type B,CFe B (top)      315
+    30    DXS         JPG Norm    1.10      33.0  fits SD UHS-II,CFe Type B,CFe B (top)      545
+    30    DXS         JPG Basic    0.65      19.5  fits SD UHS-II,CFe Type B,CFe B (top)      923
+    30    DXS         RAW 14bit    5.20     156.0  fits SD UHS-II,CFe Type B,CFe B (top)      115
+    30    DXS         RAW lossless    2.90      87.0  fits SD UHS-II,CFe Type B,CFe B (top)      206
+    30    DXS         RAW hi-eff    2.00      60.0  fits SD UHS-II,CFe Type B,CFe B (top)      300
+    45    DXL         JPG Fine    7.00     315.0  fits CFe Type B,CFe B (top)       85
+    45    DXL         JPG Norm    4.00     180.0  fits SD UHS-II,CFe Type B,CFe B (top)      150
+    45    DXL         JPG Basic    2.20      99.0  fits SD UHS-II,CFe Type B,CFe B (top)      272
+    45    DXL         RAW 14bit   20.70     931.5  no card fits (230..700)       28
+    45    DXL         RAW lossless   11.50     517.5  fits CFe B (top)             52
+    45    DXL         RAW hi-eff    8.00     360.0  fits CFe Type B,CFe B (top)       75
+    45    DXM         JPG Fine    4.00     180.0  fits SD UHS-II,CFe Type B,CFe B (top)      150
+    45    DXM         JPG Norm    2.30     103.5  fits SD UHS-II,CFe Type B,CFe B (top)      260
+    45    DXM         JPG Basic    1.30      58.5  fits SD UHS-II,CFe Type B,CFe B (top)      461
+    45    DXM         RAW 14bit   11.60     522.0  fits CFe B (top)             51
+    45    DXM         RAW lossless    6.40     288.0  fits CFe Type B,CFe B (top)       93
+    45    DXM         RAW hi-eff    4.50     202.5  fits SD UHS-II,CFe Type B,CFe B (top)      133
+    45    DXS         JPG Fine    1.90      85.5  fits SD UHS-II,CFe Type B,CFe B (top)      315
+    45    DXS         JPG Norm    1.10      49.5  fits SD UHS-II,CFe Type B,CFe B (top)      545
+    45    DXS         JPG Basic    0.65      29.2  fits SD UHS-II,CFe Type B,CFe B (top)      923
+    45    DXS         RAW 14bit    5.20     234.0  fits CFe Type B,CFe B (top)      115
+    45    DXS         RAW lossless    2.90     130.5  fits SD UHS-II,CFe Type B,CFe B (top)      206
+    45    DXS         RAW hi-eff    2.00      90.0  fits SD UHS-II,CFe Type B,CFe B (top)      300
+
+[3] simulation, mean of 5 seeds, OPT(R1+R2+R4) allocation, CFe Type B card
+    fps   win    fmt          overln  shutFPS   avgFPS    p50ms  drainms   CPU0%   viol  binding
+    30    DXL    JPG Fine       0.91    30.00    29.24     85.3     85.3     1.7      0  none
+    30    DXL    JPG Norm       0.91    30.00    29.36     77.0     77.0     1.6      0  none
+    30    DXL    JPG Basic      0.91    30.00    29.43     72.1     72.2     1.6      0  none
+    30    DXL    RAW 14bit      0.91    30.00    18.89    675.4   1209.5     1.6      0  CARD +12486us/f
+    30    DXL    RAW lossless    0.91    30.00    29.07     97.6     97.6     1.6      0  none
+    30    DXL    RAW hi-eff     0.91    30.00    29.20     88.0     88.0     1.6      0  none
+    30    DXM    JPG Fine       0.51    30.00    29.77     48.6     48.6     1.6      0  none
+    30    DXM    JPG Norm       0.51    30.00    29.84     44.0     44.1     1.6      0  none
+    30    DXM    JPG Basic      0.51    30.00    29.88     41.3     41.3     1.6      0  none
+    30    DXM    RAW 14bit      0.51    30.00    29.47     69.5     69.4     1.7      0  none
+    30    DXM    RAW lossless    0.51    30.00    29.68     55.2     55.2     1.7      0  none
+    30    DXM    RAW hi-eff     0.51    30.00    29.75     50.1     50.1     1.7      0  none
+    30    DXS    JPG Fine       0.23    30.00    30.00     22.8     22.7     1.6      0  none
+    30    DXS    JPG Norm       0.23    30.00    30.00     20.6     20.6     1.6      0  none
+    30    DXS    JPG Basic      0.23    30.00    30.00     19.4     19.4     1.7      0  none
+    30    DXS    RAW 14bit      0.23    30.00    30.00     31.8     31.9     1.6      0  none
+    30    DXS    RAW lossless    0.23    30.00    30.00     25.5     25.4     1.7      0  none
+    30    DXS    RAW hi-eff     0.23    30.00    30.00     23.1     23.1     1.6      0  none
+    45    DXL    JPG Fine       1.36     0.00     0.00      0.0      0.0     0.0      0  none
+    45    DXL    JPG Norm       1.36     0.00     0.00      0.0      0.0     0.0      0  none
+    45    DXL    JPG Basic      1.36     0.00     0.00      0.0      0.0     0.0      0  none
+    45    DXL    RAW 14bit      1.36     0.00     0.00      0.0      0.0     0.0      0  none
+    45    DXL    RAW lossless    1.36     0.00     0.00      0.0      0.0     0.0      0  none
+    45    DXL    RAW hi-eff     1.36     0.00     0.00      0.0      0.0     0.0      0  none
+    45    DXM    JPG Fine       0.77    45.00    44.42     48.6     48.6     2.5      0  none
+    45    DXM    JPG Norm       0.77    45.00    44.52     44.0     44.0     2.5      0  none
+    45    DXM    JPG Basic      0.77    45.00    44.58     41.3     41.3     2.5      0  none
+    45    DXM    RAW 14bit      0.77    45.00    33.96    374.4    672.6     2.5      0  CARD +4569us/f
+    45    DXM    RAW lossless    0.77    45.00    44.27     55.2     55.3     2.5      0  none
+    45    DXM    RAW hi-eff     0.77    45.00    44.38     50.1     50.1     2.5      0  none
+    45    DXS    JPG Fine       0.34    45.00    44.99     22.8     22.8     2.5      0  none
+    45    DXS    JPG Norm       0.34    45.00    45.00     20.6     20.6     2.5      0  none
+    45    DXS    JPG Basic      0.34    45.00    45.00     19.4     19.4     2.5      0  none
+    45    DXS    RAW 14bit      0.34    45.00    44.78     31.9     31.8     2.5      0  none
+    45    DXS    RAW lossless    0.34    45.00    44.93     25.5     25.5     2.5      0  none
+    45    DXS    RAW hi-eff     0.34    45.00    44.98     23.1     23.1     2.5      0  none
+
+[4] headline targets, weak-link table
+    DX DXL  45 fps JPG Fine      464.8 MP/s   315.0 MB/s  -> line 1.36x / enc 1.16x / SD 315>230
+    DX DXM  45 fps JPG Fine      260.7 MP/s   180.0 MB/s  -> CLEAR
+    DX DXS  45 fps JPG Fine      116.2 MP/s    85.5 MB/s  -> CLEAR
+    DX DXL  30 fps RAW lossless  309.8 MP/s   345.0 MB/s  -> SD 345>230
+    DX DXL  30 fps RAW 14bit     309.8 MP/s   621.0 MB/s  -> SD 621>230
+    DX DXM  30 fps RAW lossless  173.8 MP/s   192.0 MB/s  -> CLEAR
+    DX DXS  30 fps RAW lossless   77.5 MP/s    87.0 MB/s  -> CLEAR
+
+[5] firmware evidence, re-checked this pass (earlier notes corrected)
+    0x92CF50  video readout table, 18 records: fps in {24,25,30,50,60,100,120};
+              max pixel rate 248.8 MP/s (UHD30) -- no stills entry
+    0x19A5A50 ordered output-size list, (w,h) u16 pairs stride 4:
+              3024x3024 6048x4024 4528x3016 3024x2016 6048x3400 4528x2544
+              3024x1696 3936x2624 2944x1968 1968x1312 3936x2214
+              -> DX L/M/S exist as ENCOKED SIZES, not as proven readout modes
+    0x941490  aspect/crop ladder (fixed-height rows: 4024, 3016, 2624, 1968...)
+    0x92F648  NOT a release-rate ladder: one 30, then even 10..62 (27 values)
+              then odd 9..61 (27 values).  Consumer unidentified; 45 is in the
+              odd run and 60 in the even run, so this proves nothing about fps.
+    retracted: 'no 45 fps code' -- that read was a truncated 8-column view.
+    absent:    preshoot symbols (PreShootingCache/Pshot/EXCP_PSHOT) appear
+              0 times in every Z6 II module; Z8 hits are Linux 'snapshot' substrings.

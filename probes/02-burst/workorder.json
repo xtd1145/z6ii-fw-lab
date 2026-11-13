@@ -1,0 +1,691 @@
+{
+  "schema": "z6ii-dx-workorder/1",
+  "date": "2026-10-26",
+  "scope": {
+    "goal": [
+      "DX 45fps JPEG",
+      "DX 30fps RAW"
+    ],
+    "constraints": [
+      "original firmware is read-only",
+      "modify copies only",
+      "no flashing or camera writes without explicit authorization",
+      "all analysis must be reproducible"
+    ],
+    "k8": "out of scope; header SHA1 is not re-signed; only CRC-only packaging is covered"
+  },
+  "firmware": {
+    "model": "Nikon Z 6II",
+    "version": "1.70",
+    "container": {
+      "path": "Z6_2_0170.dec",
+      "size": 49002888,
+      "sha256": "ffb37b4a2b3f02263fb63fd7510b792700b9ec861b96a05b9524de351bb0d32f"
+    },
+    "mas": {
+      "path": "extracted/eg1850_mas_01700",
+      "size": 38750136,
+      "sha256": "7b85aa96ea25d6b23481627313082476619ccb4dd3634a585de4ed896d350071",
+      "vma_base": "0x10000000"
+    },
+    "mas_with_crc": {
+      "path": "all_modules/Z6_2_0170/eg1850_mas_01700",
+      "size": 38750138,
+      "sha256": "bb83613121f843d65101da936d942acdc513d86dbd3abc26259d0d870d03f5d4",
+      "note": "identical to extracted/eg1850_mas_01700 plus a 2-byte CRC16 at the tail; file offsets are identical"
+    },
+    "sla": {
+      "path": "extracted/eg1850_sla_01700",
+      "size": 8832192,
+      "vma_base": "0x10000000"
+    }
+  },
+  "physics": {
+    "line12_mps": 340.72,
+    "line12_basis": "FX 24.337MP x 14fps (factory Continuous H extended 14fps)",
+    "line14_mps": 243.37,
+    "line14_basis": "FX 24.337MP x 10fps (Nikon: 14-bit NEF/RAW approx 10fps)",
+    "encoder_mps_model": 400.0,
+    "encoder_proven_baseline_mps": 340.72,
+    "encoder_proven_basis": "FX 24.337MP x 14fps JPEG is a shipped mode",
+    "pool_mb": 600.0,
+    "cards_mbps": {
+      "SD UHS-II": 230.0,
+      "CFe Type B": 400.0,
+      "CFe B top": 700.0
+    },
+    "attachment_calibration": "497 MP/s from 4K60 DX 8.29MP/16.7ms; used only as a TG capability reference, not as a stills hard cap"
+  },
+  "targets": [
+    {
+      "id": "DX45_JPEG",
+      "plan": "C4",
+      "definition": "DX 2x2 bin 1968x1312, JPEG Fine, 45fps",
+      "readout": {
+        "mode": "2x2 bin",
+        "w": 1968,
+        "h": 1312,
+        "mp": 2.582016,
+        "fps": 45,
+        "mps": 116.2,
+        "ratio_vs_line12": 0.341
+      },
+      "output": {
+        "format": "JPEG Fine",
+        "mb_per_frame": 1.9,
+        "mb_s": 85.5
+      },
+      "pool": {
+        "frames": 315,
+        "seconds": 7.0
+      },
+      "cards_ok": [
+        "SD UHS-II",
+        "CFe Type B",
+        "CFe B top"
+      ],
+      "encoder_load_mps": 116.2,
+      "encoder_ratio_vs_proven": 0.341,
+      "verdict": "CLEAR",
+      "rejected_alternatives": [
+        {
+          "definition": "full-DX readout, DX L 3936x2624 @45",
+          "readout_mps": 464.8,
+          "ratio_vs_line12": 1.364,
+          "encoder_mps": 464.8,
+          "reason": "readout 1.36x line and encoder 1.16x; output size does not shrink the readout window"
+        },
+        {
+          "definition": "full-DX readout, DX M 2944x1968 @45",
+          "readout_mps": 464.8,
+          "ratio_vs_line12": 1.364,
+          "encoder_mps": 260.7,
+          "reason": "readout still 1.36x; encoder alone is not the blocker"
+        },
+        {
+          "definition": "full-DX readout, DX S 1968x1312 @45",
+          "readout_mps": 464.8,
+          "ratio_vs_line12": 1.364,
+          "encoder_mps": 116.2,
+          "reason": "readout still 1.36x; only JPEG payload shrinks"
+        }
+      ]
+    },
+    {
+      "id": "DX30_RAW",
+      "plan": "C3",
+      "definition": "full DX 3936x2624, 30fps, 12-bit lossless or high-efficiency",
+      "readout": {
+        "mode": "full DX",
+        "w": 3936,
+        "h": 2624,
+        "mp": 10.328064,
+        "fps": 30,
+        "mps": 309.8,
+        "ratio_vs_line12": 0.909
+      },
+      "outputs": [
+        {
+          "format": "RAW lossless 12-bit",
+          "mb_per_frame": 11.5,
+          "mb_s": 345.0,
+          "cards_ok": [
+            "CFe Type B",
+            "CFe B top"
+          ],
+          "pool_frames": 52,
+          "pool_seconds": 1.73
+        },
+        {
+          "format": "RAW high-efficiency 12-bit",
+          "mb_per_frame": 8.0,
+          "mb_s": 240.0,
+          "cards_ok": [
+            "CFe Type B",
+            "CFe B top"
+          ],
+          "pool_frames": 75,
+          "pool_seconds": 2.5
+        }
+      ],
+      "verdict": "CLEAR (12-bit only)",
+      "rejected_alternatives": [
+        {
+          "definition": "full DX 3936x2624 @30, 14-bit",
+          "readout_mps": 309.8,
+          "ratio_vs_line14": 1.273,
+          "equivalent_12bit_mps": 433.7,
+          "card_mb_s": 621.0,
+          "pool_frames": 28,
+          "reason": "1.27x 14-bit line; only top-spec CFe; ceiling is about 23.6fps"
+        },
+        {
+          "definition": "2x2 bin 1968x1312 @30, 14-bit",
+          "readout_mps": 77.5,
+          "verdict": "CLEAR but only 2.58MP",
+          "card_mb_s": 156.0,
+          "pool_frames": 115
+        }
+      ]
+    }
+  ],
+  "firmware_anchors": [
+    {
+      "file_off": "0x9417B8",
+      "vma": "0x109417B8",
+      "kind": "output size enum",
+      "content": "6-byte records (u16 w, u16 h, u16 id); id 9=3936x2624 DX L, id 10=2944x1968 DX M, id 11=1968x1312 DX S",
+      "note": "output size is NOT the sensor readout window"
+    },
+    {
+      "file_off": "0x92CF50",
+      "vma": "0x1092CF50",
+      "kind": "video readout table",
+      "content": "18 records x 12 bytes; max 248.8 MP/s; no 45fps; no still DXL",
+      "note": "does not include 4K60 DX, which is the attachment's 497 MP/s calibration point"
+    },
+    {
+      "file_off": "0x1091900",
+      "kind": "UTF-16 quality menu pool",
+      "content": "NEF (RAW)+JPEG fine/normal/basic; JPEG fine/normal/basic"
+    },
+    {
+      "file_off": "0x1091B00",
+      "kind": "UTF-16 size/format menu pool",
+      "content": "Large/Medium/Small; 5:4 (30x24)/FX/DX/DX (24x16); Lossless compressed/Compressed; 12-bit/14-bit"
+    },
+    {
+      "file_off": "0x1092D14",
+      "kind": "UTF-16 release mode menu pool",
+      "content": "Single frame/Continuous/Continuous H/Continuous L"
+    },
+    {
+      "file_off": "0x10A3378",
+      "kind": "UTF-16 UI anchor",
+      "content": "Continuous H (extended)"
+    },
+    {
+      "file_off": "0x242E9EC",
+      "vma": "0x1242E9EC",
+      "kind": "task table",
+      "content": "CAPSEQ @0x242ED50, CAPTG @0x242ED6C, SHUTTER @0x242ED88, STGRAW @0x242E9EC; stride 0x1c",
+      "note": "descriptors only; no entry pointers"
+    },
+    {
+      "file_off": "0x119DF50C",
+      "vma": "0x129DF50C",
+      "kind": "still/movie mode records",
+      "content": "stride 0x480; only 3-7 non-zero bytes per record; no static mode parameters"
+    }
+  ],
+  "jpeg_encoder_evidence": [
+    {
+      "module": "mas",
+      "file_off": "0x242DF18",
+      "vma": "0x1242DF18",
+      "content": "IMPJPGCO"
+    },
+    {
+      "module": "mas",
+      "file_off": "0x242DF34",
+      "vma": "0x1242DF34",
+      "content": "IMPJPGEN"
+    },
+    {
+      "module": "sla",
+      "file_off": "0x852024",
+      "vma": "0x10852024",
+      "content": "IMPJPGCO"
+    },
+    {
+      "module": "sla",
+      "file_off": "0x852040",
+      "vma": "0x10852040",
+      "content": "IMPJPGEN"
+    },
+    {
+      "module": "sla",
+      "file_off": "0x1485F6",
+      "vma": "0x101485F6",
+      "content": "JPEG_CODEC"
+    },
+    {
+      "module": "sla",
+      "file_off": "0x148616",
+      "vma": "0x10148616",
+      "content": "JPEG_ENC"
+    },
+    {
+      "module": "sla",
+      "file_off": "0x148696",
+      "vma": "0x10148696",
+      "content": "H264"
+    },
+    {
+      "module": "sla",
+      "file_off": "0x8307C",
+      "vma": "0x108307C",
+      "content": "ENCEVENT_H264BUFFER0_ENCODED .. ENCEVENT_ENCODE_END (0x8307C..0x83158)"
+    }
+  ],
+  "unknowns": [
+    "SIF/TG register base and frame timing (0x2404xxxx is GPIO, not TG)",
+    "still DX readout window registers (3936x2624)",
+    "2x2 bin window registers (1968x1312)",
+    "CH extended frame period registers (33.33ms / 22.22ms)",
+    "12-bit RAW readout/packing configuration vs 14-bit",
+    "ISP output size and RAW packing configuration",
+    "whether 14fps extended is a pure electronic-shutter path",
+    "runtime content of mode records 0x119DF50C",
+    "runtime task table entry pointers (CAPTG/CAPSEQ)"
+  ],
+  "probes": {
+    "design_doc": "PROBE_DESIGN.md",
+    "P0_boot_baseline": {
+      "dumps": [
+        {
+          "vma": "0x1244E7A0",
+          "len": "0x690",
+          "what": "60 x 0x1c task descriptor table"
+        },
+        {
+          "vma": "0x1242E4D0",
+          "len": "0x350",
+          "what": "53 x 0x10 object registry"
+        },
+        {
+          "vma": "0x119FF50C",
+          "len": "0x1B00",
+          "what": "6 x 0x480 mode records"
+        },
+        {
+          "vma": "0x1244C224",
+          "len": "0x1000",
+          "what": "component/service name table"
+        },
+        {
+          "vma": "0x1094CF50",
+          "len": "0xD8",
+          "what": "mas video table (no 4K60)"
+        },
+        {
+          "vma": "0x1091D58C",
+          "len": "0x200",
+          "what": "sla video table (4K60/50)"
+        },
+        {
+          "vma": "0x109617B8",
+          "len": "0x100",
+          "what": "output size table"
+        }
+      ]
+    },
+    "P1_sif_hooks": {
+      "entries": [
+        "0x1032CC66",
+        "0x1032CBCA",
+        "0x1032CB8E",
+        "0x1032CB18",
+        "0x1032CABE",
+        "0x1032C9C8",
+        "0x1032C882",
+        "0x1032C77E"
+      ],
+      "table_read_watch": "0x1030E664..0x1030E684",
+      "log": [
+        "pc",
+        "r0",
+        "r1",
+        "r2",
+        "r3",
+        "sp",
+        "lr",
+        "mem[r0:0x80]",
+        "mem[r0+0xc:0x80]",
+        "mem[r1:0x100]"
+      ],
+      "max_hits_per_scene": 200,
+      "boot_trace": "only 0x1032C9C8 hit once; other 7 entries 0; rerun during menu switches",
+      "mode": "real-camera (emulator boot trace: only SIF_5 0x1032C9C8 hit once)"
+    },
+    "P2_mode_record_writes": {
+      "range": "0x119FF50C..0x11A0100C",
+      "real_camera_only": true,
+      "fields": [
+        "timestamp",
+        "pc",
+        "addr",
+        "width",
+        "value",
+        "old_value"
+      ],
+      "action": "monitor write accesses only; no writes issued"
+    },
+    "P3_object_registry_heap": {
+      "registry": "0x1242E4D0..0x1242E810",
+      "heap_dumps": [
+        {
+          "vma": "0xc188c000",
+          "len": "0x1000",
+          "file": "heap_small.bin",
+          "what": "handle/descriptor area"
+        },
+        {
+          "vma": "0xc2a40000",
+          "len": "0x10000",
+          "file": "heap_arena.bin",
+          "what": "whole 0xC2A4xxxx object arena"
+        }
+      ],
+      "ram_scan_names": [
+        "CAPTG",
+        "CAPSEQ",
+        "SHUTTER",
+        "STGRAW"
+      ],
+      "after_mode_switch": "dump 0x1242E4D0 0x400 and 0xc2a40000 0x10000",
+      "note": "registry -> handle -> object is two-level; 0xC2A49000 being zero means objects are not initialized, not that the address is wrong",
+      "if_still_zero": "xp /16x 0xC2A4A858 to check physical vs virtual; pmemsave is broken",
+      "next_emulator_test": "emulator closed: LV default APPLV no CAPTG; Movie/Release/G14/G15 unavailable",
+      "real_camera_only": true
+    },
+    "P4_table_reads": {
+      "tables": [
+        {
+          "vma": "0x1094CF50",
+          "len": "0xD8",
+          "what": "mas video table"
+        },
+        {
+          "vma": "0x1091D58C",
+          "len": "0x200",
+          "what": "sla video table incl 4K60"
+        },
+        {
+          "vma": "0x109617B8",
+          "len": "0x100",
+          "what": "output size table"
+        }
+      ],
+      "mode": "real-camera (emulator baseline already captured)"
+    },
+    "P5_mmio_fallback": {
+      "range": "0x20000000..0x25000000",
+      "exclude": [
+        "0x24040000..0x24047000",
+        "0x20140000..0x2014E000"
+      ],
+      "real_camera_only": true,
+      "monitor": "write accesses only; no writes issued"
+    },
+    "scenes": [
+      {
+        "id": 1,
+        "scene": "single frame FX 12-bit",
+        "purpose": "baseline"
+      },
+      {
+        "id": 2,
+        "scene": "CH 5fps FX",
+        "purpose": "low-speed period"
+      },
+      {
+        "id": 3,
+        "scene": "CH extended 14fps FX 12-bit",
+        "purpose": "14fps period baseline"
+      },
+      {
+        "id": 4,
+        "scene": "CH extended 14fps FX 14-bit",
+        "purpose": "bit-depth cost"
+      },
+      {
+        "id": 5,
+        "scene": "video 4K30 DX",
+        "purpose": "DX window and 30fps period"
+      },
+      {
+        "id": 6,
+        "scene": "video 4K60 DX",
+        "purpose": "60fps period/window reference"
+      },
+      {
+        "id": 7,
+        "scene": "still DX L 14fps 12-bit",
+        "purpose": "full-DX readout baseline"
+      },
+      {
+        "id": 8,
+        "scene": "still DX M and DX S 14fps",
+        "purpose": "test whether M/S shrink the readout window"
+      }
+    ],
+    "pass_criteria": [
+      "on a real camera, CAPTG/SHUTTER appear in registry/arena after actual shooting, or are proven not observable in RAM",
+      "P1 hits a SIF entry during actual shooting (not just SIF_5 at boot)",
+      "at least 3 of 5/14/30/60 scenes show a period field within +/-5% of 1/fps; 5/14 ratio 2.7-2.9",
+      "DX M/S vs DX L resolves whether the readout window follows output size",
+      "14-bit scene differs from 12-bit in at least one field",
+      "no Data Abort/ERR; no flashing"
+    ]
+  },
+  "patch_plan": [
+    {
+      "target": "DX45_JPEG",
+      "changes": [
+        "TG: 2x2 bin window 1968x1312, frame period 22222us",
+        "ISP: output 1968x1312, JPEG Fine",
+        "reuse existing CH extended / electronic-shutter path"
+      ],
+      "risk": "medium (TG timing); no new shutter control flow"
+    },
+    {
+      "target": "DX30_RAW",
+      "changes": [
+        "TG: window 3936x2624, frame period 33333us, 12-bit readout",
+        "ISP: RAW 12-bit lossless or high-efficiency",
+        "reuse existing CH extended / electronic-shutter path"
+      ],
+      "risk": "medium (TG timing + 12-bit packing)"
+    },
+    {
+      "container": [
+        "replace the target SIF/TG config block (equal or unequal length)",
+        "recompute module CRC16",
+        "recompute package CRC16",
+        "re-sign header with SHA1(body||K8)",
+        "XOR re-encrypt with key.json",
+        "if module size changes, update directory off/len"
+      ]
+    }
+  ],
+  "validation": [
+    "static: z6ii_patch.py --selftest --k8 must report diff = 0 bytes",
+    "static: PoC dist/poc/Z6_2_0170_poc_compressed.bin re-signs and round-trips (SHA256 afa1527a...)",
+    "diff: only the target bytes, module CRC and header differ; all other module bytes identical",
+    "bench: single frame, then 5fps, then target mode; check black frame, ERR, card write, temperature",
+    "no flashing without authorization; original .bin/.dec remains untouched"
+  ],
+  "blocked_by": [
+    "CAPTG requires an actual shooting sequence; emulator lacks movie/release/shutter inputs",
+    "no runtime SIF/TG register map",
+    "no SIF/TG model; offline execution cannot validate any SIF/TG patch",
+    "no authorized flashing path"
+  ],
+  "k8": {
+    "status": "verified",
+    "source": "user-provided 2026-10-27; value stored in project memory, not duplicated here",
+    "verification": "SHA1(body||K8) == stored header; z6ii_patch.py --selftest --k8 diff = 0 bytes",
+    "scope": "Z6 II 1.70 only; Z7 II 1.70 / Z50 2.60 / Z6 3.80 / Z8 3.11 do not match",
+    "effect": "equal-length restriction lifted; full reseal chain: module CRC16 -> package CRC16 -> SHA1(body||K8) -> XOR re-encrypt",
+    "caveat": "if module size changes, directory off/len must be updated; flashing still requires authorization and a recovery plan"
+  },
+  "gpio_finding": {
+    "summary": "0x2404xxxx is GPIO/pin control, not TG. The attachment's 0x24040000..0x24060000 probe range is wrong.",
+    "literal_pool": {
+      "file_off": "0x450674..0x450AA8",
+      "vma": "0x10450674..0x10450AA8",
+      "words": [
+        "0x24040000",
+        "0x24040100",
+        "0x24042000",
+        "0x24042100",
+        "0x24045000",
+        "0x24045100",
+        "0x24045200",
+        "0x24045300",
+        "0x24046000",
+        "0x24046100",
+        "0x20140000",
+        "0x20141000",
+        "0x2014D000"
+      ]
+    },
+    "bulk_write_functions": [
+      {
+        "file_off": "0x450320",
+        "vma": "0x10450320",
+        "base_blocks": [
+          "0x24040000",
+          "0x24040100",
+          "0x24042000"
+        ],
+        "shape": "16 iterations, 2 items each (32 pins), 3 x 32-bit words, two 12-bit fields per word"
+      },
+      {
+        "file_off": "0x4504B6",
+        "vma": "0x104504B6",
+        "base_blocks": [
+          "0x24040000",
+          "0x24040100"
+        ],
+        "shape": "16 iterations, 2 items each (32 pins), 8-bit fields"
+      },
+      {
+        "file_off": "0x450578",
+        "vma": "0x10450578",
+        "base_blocks": [
+          "0x24045000",
+          "0x24045100",
+          "0x24045200",
+          "0x24045300"
+        ],
+        "shape": "16 iterations, 2 items each (32 pins), 8-bit fields"
+      }
+    ],
+    "readback_function": "0x4509EE (ubfx bit1/bit9/bit16/bit24)",
+    "evidence": "32 pins per port, input/output/pull fields, clock/reset regs at 0x2014xxxx"
+  },
+  "sif_leads": {
+    "ip_name_table": {
+      "file_off": "0x76B010",
+      "stride": "0x20",
+      "first_31": [
+        "EXT_INT_9",
+        "EXT_INT_10",
+        "EXT_INT_11",
+        "EXT_INT_12",
+        "EXT_INT_13",
+        "EXT_INT_14",
+        "EXT_INT_15",
+        "-",
+        "-",
+        "-",
+        "-",
+        "CA7_AXI_ERROR",
+        "SIF_0",
+        "SIF_1",
+        "SIF_2",
+        "SIF_3",
+        "SIF_4",
+        "SIF_5",
+        "SIF_6",
+        "SIF_7",
+        "PPC_0",
+        "PPC_1",
+        "PPC_2",
+        "PPC_3",
+        "PPC_4",
+        "MIPU_0",
+        "MIPU_1",
+        "IPU",
+        "IIP",
+        "IDMAC_0",
+        "IDMAC_1"
+      ]
+    },
+    "handler_table": {
+      "file_off": "0x2EE634",
+      "entries": 31,
+      "sif_indices": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "sif_handlers": [
+        "0x1030CC67",
+        "0x1030CBCB",
+        "0x1030CB8F",
+        "0x1030CB19",
+        "0x1030CABF",
+        "0x1030C9C9",
+        "0x1030C883",
+        "0x1030C77F"
+      ]
+    },
+    "component_ids": {
+      "ASifDriver": "0x41090000",
+      "SifService": "0x421D0000",
+      "CaptureSensorService": "0x02020000",
+      "CaptureSequenceService": "0x04210000"
+    },
+    "note": "SIF handlers are service message handlers; register access is in their lower HAL, so probe must follow calls or watch the bus"
+  },
+  "poc": {
+    "path": "dist/poc/Z6_2_0170_poc_compressed.bin",
+    "sha256": "afa1527a3a14068319aa77b00bb6cc15c6d2bcee2a9db3f74daf88cc7e400303",
+    "change": "mas menu label 'Lossless compressed' -> 'Lossless COMPRESSED'",
+    "verification": "header SHA1(body||K8) matches; module/package CRC OK; round-trip decrypt OK",
+    "status": "local copy only, not flashed",
+    "scope": "packaging/boot validation only; NOT a burst parameter patch"
+  },
+  "burst_spec": "BURST_SPEC.md",
+  "probe_design": "PROBE_DESIGN.md",
+  "tooling": "HMP memsave <vaddr> <size> <file>; QMP pmemsave is broken on this machine",
+  "runtime_base_mas": "0x10020000",
+  "reanalysis": "P0_P3_REANALYSIS.md",
+  "status": "CAPTG requires an actual shooting sequence; the emulator cannot create it (LV=default APPLV no CAPTG; Movie/Release/external shutter unavailable). Real-camera only.",
+  "safety": "All probes are read-only. P0/P1/P3/P4 read guest memory/tables/trace; P2/P5 monitor guest write accesses without issuing writes; memsave/xp are reads; no NOR/card/partition/block-device writes; no flashing.",
+  "b1_dump_plan": "B1_DUMP_PLAN.md",
+  "b1": {
+    "plan": "B1_DUMP_PLAN.md",
+    "np3_container": "NCP\u0000 at 0; TLV {BE32 tag, BE32 len}",
+    "curve_tag": 2,
+    "curve_block_len": "0x242",
+    "curve_block_header": "0x40",
+    "curve_data_bytes": 514,
+    "curve_points": 257,
+    "curve_value_max": "0x7FFF",
+    "page_header_bytes": 16,
+    "page_header_location": "tag 0x0002 payload +0x18..0x27 (reserved block-header area)",
+    "net_raw": 514,
+    "net_mono": 222,
+    "full_bundle_bytes": 10576,
+    "reduced_bundle_bytes": 4944,
+    "mode_records_bytes": 6912,
+    "saves": {
+      "full_raw": 21,
+      "full_mono": 48,
+      "reduced_raw": 10,
+      "reduced_mono": 23,
+      "mode_only_raw": 14,
+      "mode_only_mono": 32
+    },
+    "note": "real NP3 curve block: 0x40 header + 514 B data (257 BE16), range 0..0x7FFF; monotonic carrier uses step 128, 254 x 7-bit digits = 222 B"
+  }
+}

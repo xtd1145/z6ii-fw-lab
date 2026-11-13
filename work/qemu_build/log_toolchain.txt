@@ -1,0 +1,34 @@
+
+##### seed keys (first run only) #####
+/d/z6ii_fw_lab/work/qemu_build/install_toolchain.sh: line 13: pacman-key: command not found
+/d/z6ii_fw_lab/work/qemu_build/install_toolchain.sh: line 14: pacman-key: command not found
+
+##### update core runtime + bash #####
+/d/z6ii_fw_lab/work/qemu_build/install_toolchain.sh: line 18: pacman: command not found
+
+##### full system sync #####
+/d/z6ii_fw_lab/work/qemu_build/install_toolchain.sh: line 21: pacman: command not found
+
+##### install build + analysis packages #####
+/d/z6ii_fw_lab/work/qemu_build/install_toolchain.sh: line 24: pacman: command not found
+
+##### verify #####
+gcc                      NOT FOUND
+ld                       NOT FOUND
+meson                    NOT FOUND
+ninja                    NOT FOUND
+pkg-config               NOT FOUND
+python                   Python 3.14.7
+capstone                 NOT FOUND
+dlltool                  NOT FOUND
+arm-none-eabi-objdump    NOT FOUND
+gdb-multiarch            NOT FOUND
+clang                    NOT FOUND
+/d/z6ii_fw_lab/work/qemu_build/install_toolchain.sh: line 49: pkg-config: command not found
+glib-2.0: MISSING
+/d/z6ii_fw_lab/work/qemu_build/install_toolchain.sh: line 50: pkg-config: command not found
+pixman-1: MISSING
+/d/z6ii_fw_lab/work/qemu_build/install_toolchain.sh: line 51: pkg-config: command not found
+capstone: MISSING
+
+##### DONE (pacman rc=127) #####

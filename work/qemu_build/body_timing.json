@@ -1,0 +1,118 @@
+{
+  "_readme": [
+    "Body measurements vs model delay knobs. This file is the calibration",
+    "input: edit `body_value` from a real camera measurement, then run",
+    "`python timing_probe.py --emit` to get the -global fragment that applies",
+    "it. Nothing here changes the model's structure - it only fills in the",
+    "number that a specific path waits for.",
+    "",
+    "body_value = null means nobody has measured it yet. Do not guess: a",
+    "fabricated number is worse than an admitted gap, because it makes a",
+    "timing question look answered when it is not.",
+    "",
+    "unit: us or ms. model_event, when set, is an interval this tool can",
+    "actually extract from a QEMU trace (see timing_probe.py report mode).",
+    "model_event = null means the model has no event for that interval at all."
+  ],
+  "measurements": [
+    {
+      "id": "t1_gap",
+      "desc": "T1 interval on the body",
+      "body_value": [55.0, 23.0],
+      "unit": "us",
+      "model_event": null,
+      "qemu_property": null,
+      "status": "not_modelled",
+      "note": "No model event corresponds to this interval. The capseq delay is a laboratory constant, not this."
+    },
+    {
+      "id": "t1_to_t2",
+      "desc": "T1 to T2 on the body",
+      "body_value": [6100.0],
+      "unit": "us",
+      "model_event": "request-rise->complete",
+      "qemu_property": "nikon-z72-boot-config.capseq-delay-ns",
+      "model_default": 200000,
+      "status": "calibrated",
+      "note": "Applied 6100000 and measured rise->complete = 6.100 ms, matching the body figure. Doing so exposed two structural bugs that the old 200 us value hid: (1) the falling edge of the request pulse cancelled the latched capture, and (2) capseq_tick refused to complete while the request line was low. With a 6.1 ms exposure both fire on every frame, so the model used to drop the capture and leave a black screen. Both fixed (request-fall-latched)."
+    },
+    {
+      "id": "peer_to_handshake",
+      "desc": "peer to handshake on the body",
+      "body_value": [1100.0],
+      "unit": "us",
+      "model_event": null,
+      "qemu_property": null,
+      "status": "not_modelled",
+      "note": "The transport model completes in the same timer tick; there is no interval to calibrate."
+    },
+    {
+      "id": "cvp_command_to_completion",
+      "desc": "CVP submit to completion packet",
+      "body_value": null,
+      "unit": "us",
+      "model_event": null,
+      "qemu_property": "nikon-z62-cvp-control.compute-delay-ns",
+      "model_default": 2000000,
+      "status": "unmeasured",
+      "note": "Default 2 ms is a laboratory value chosen so a test can observe it. Replace once the body figure is known."
+    },
+    {
+      "id": "cvp_boot_message",
+      "desc": "CVP reset release to boot message",
+      "body_value": null,
+      "unit": "us",
+      "model_event": null,
+      "qemu_property": "nikon-z62-cvp-control.boot-delay-ns",
+      "model_default": 1000,
+      "status": "unmeasured",
+      "note": "Default 1 us."
+    },
+    {
+      "id": "ctrl_flash_sector_erase",
+      "desc": "STM32F412 sector erase (16 KiB sector)",
+      "body_value": null,
+      "unit": "us",
+      "model_event": null,
+      "qemu_property": "Z62_CTRLFLASH_ERASE_NS",
+      "model_default": 20000000,
+      "status": "unmeasured",
+      "env_not_property": true,
+      "note": "Environment variable, not a QOM property, because the flash shim is not a qdev. Raising it lengthens wall-clock boot under icount (the controller poll loop burns virtual time while the engine waits): at 20 ms the HUD appears near 70 s instead of 55 s. A screenshot taken at a fixed deadline therefore looks black - that is a measurement-window effect, not a boot failure. Verify with a later screenshot before concluding anything."
+    },
+    {
+      "id": "ctrl_flash_word_program",
+      "desc": "STM32F412 word program",
+      "body_value": null,
+      "unit": "us",
+      "model_event": null,
+      "qemu_property": "Z62_CTRLFLASH_PROGRAM_NS",
+      "model_default": 100000,
+      "status": "unmeasured",
+      "env_not_property": true,
+      "note": "Environment variable. Datasheet typical is tens of microseconds per word."
+    },
+    {
+      "id": "shutter_travel",
+      "desc": "Curtain travel (mechanical)",
+      "body_value": null,
+      "unit": "us",
+      "model_event": null,
+      "qemu_property": "nikon-z72-boot-config.shutter-travel-ns",
+      "model_default": 4000000,
+      "status": "unmeasured",
+      "note": "Needs a high-speed capture of the actual curtain."
+    },
+    {
+      "id": "sensor_init",
+      "desc": "Sensor interface init to first frame",
+      "body_value": null,
+      "unit": "us",
+      "model_event": null,
+      "qemu_property": "nikon-z62-sensor-config.init-delay-ns",
+      "model_default": 250000000,
+      "status": "unmeasured",
+      "note": "Default 250 ms."
+    }
+  ]
+}

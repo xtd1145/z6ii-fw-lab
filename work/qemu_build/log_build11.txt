@@ -1,0 +1,9 @@
+##### ninja #####
+ninja: Entering directory `D:/z6ii_fw_lab/tools/src/qemu/build'
+[1/5] Generating qemu-version.h with a custom command (wrapped by meson to capture output)
+[2/3] Compiling C object libsystem_arm.a.p/hw_arm_nikon_z6ii.c.obj
+[3/3] Linking target qemu-system-arm.exe
+##### built #####
+-rwxr-xr-x 1 BI BI 104376417 10月 26 04:32 /d/z6ii_fw_lab/tools/src/qemu/build/qemu-system-arm.exe
+QEMU emulator version 11.1.2 (v11.1.2-dirty)
+Copyright (c) 2003-2026 Fabrice Bellard and the QEMU Project developers

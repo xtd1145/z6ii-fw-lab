@@ -1,0 +1,193 @@
+{
+  "px": {
+    "DXL": 10328064,
+    "DXM": 5793792,
+    "DXS": 2582016,
+    "DXBIN": 2582016,
+    "FX": 24337152
+  },
+  "line12": 340.72,
+  "line14": 243.37,
+  "enc": 400.0,
+  "pool": 600.0,
+  "cards": {
+    "SD UHS-II": 230.0,
+    "CFe Type B": 400.0,
+    "CFe B top": 700.0
+  },
+  "rows": [
+    {
+      "name": "DX45 JPEG, full-DX readout, L output",
+      "readout_px": 10328064,
+      "out": "DXL",
+      "fps": 45,
+      "fmt": "JPG Fine",
+      "bit": 12,
+      "mps": 464.8,
+      "line": 340.72,
+      "mb_frame": 7.0,
+      "mb_s": 315.0,
+      "pool_frames": 85,
+      "pool_seconds": 1.89,
+      "cards": [
+        "CFe Type B",
+        "CFe B top"
+      ],
+      "verdict": "READOUT 1.36x; ENC 1.16x"
+    },
+    {
+      "name": "DX45 JPEG, full-DX readout, M output",
+      "readout_px": 10328064,
+      "out": "DXM",
+      "fps": 45,
+      "fmt": "JPG Fine",
+      "bit": 12,
+      "mps": 464.8,
+      "line": 340.72,
+      "mb_frame": 4.0,
+      "mb_s": 180.0,
+      "pool_frames": 150,
+      "pool_seconds": 3.33,
+      "cards": [
+        "SD UHS-II",
+        "CFe Type B",
+        "CFe B top"
+      ],
+      "verdict": "READOUT 1.36x; ENC 1.16x"
+    },
+    {
+      "name": "DX45 JPEG, full-DX readout, S output",
+      "readout_px": 10328064,
+      "out": "DXS",
+      "fps": 45,
+      "fmt": "JPG Fine",
+      "bit": 12,
+      "mps": 464.8,
+      "line": 340.72,
+      "mb_frame": 1.9,
+      "mb_s": 85.5,
+      "pool_frames": 315,
+      "pool_seconds": 7.0,
+      "cards": [
+        "SD UHS-II",
+        "CFe Type B",
+        "CFe B top"
+      ],
+      "verdict": "READOUT 1.36x; ENC 1.16x"
+    },
+    {
+      "name": "DX45 JPEG, 2x2 bin readout, 2.6MP",
+      "readout_px": 2582016,
+      "out": "DXS",
+      "fps": 45,
+      "fmt": "JPG Fine",
+      "bit": 12,
+      "mps": 116.2,
+      "line": 340.72,
+      "mb_frame": 1.9,
+      "mb_s": 85.5,
+      "pool_frames": 315,
+      "pool_seconds": 7.0,
+      "cards": [
+        "SD UHS-II",
+        "CFe Type B",
+        "CFe B top"
+      ],
+      "verdict": "CLEAR"
+    },
+    {
+      "name": "DX30 RAW, full-DX readout, 12-bit lossless",
+      "readout_px": 10328064,
+      "out": "DXL",
+      "fps": 30,
+      "fmt": "RAW lossless",
+      "bit": 12,
+      "mps": 309.8,
+      "line": 340.72,
+      "mb_frame": 11.5,
+      "mb_s": 345.0,
+      "pool_frames": 52,
+      "pool_seconds": 1.73,
+      "cards": [
+        "CFe Type B",
+        "CFe B top"
+      ],
+      "verdict": "CLEAR"
+    },
+    {
+      "name": "DX30 RAW, full-DX readout, 12-bit hi-eff",
+      "readout_px": 10328064,
+      "out": "DXL",
+      "fps": 30,
+      "fmt": "RAW hi-eff",
+      "bit": 12,
+      "mps": 309.8,
+      "line": 340.72,
+      "mb_frame": 8.0,
+      "mb_s": 240.0,
+      "pool_frames": 75,
+      "pool_seconds": 2.5,
+      "cards": [
+        "CFe Type B",
+        "CFe B top"
+      ],
+      "verdict": "CLEAR"
+    },
+    {
+      "name": "DX30 RAW, full-DX readout, 14-bit",
+      "readout_px": 10328064,
+      "out": "DXL",
+      "fps": 30,
+      "fmt": "RAW 14bit",
+      "bit": 14,
+      "mps": 309.8,
+      "line": 243.37,
+      "mb_frame": 20.7,
+      "mb_s": 621.0,
+      "pool_frames": 28,
+      "pool_seconds": 0.93,
+      "cards": [
+        "CFe B top"
+      ],
+      "verdict": "READOUT 1.27x"
+    },
+    {
+      "name": "DX30 RAW, 2x2 bin readout, 14-bit",
+      "readout_px": 2582016,
+      "out": "DXS",
+      "fps": 30,
+      "fmt": "RAW 14bit",
+      "bit": 14,
+      "mps": 77.5,
+      "line": 243.37,
+      "mb_frame": 5.2,
+      "mb_s": 156.0,
+      "pool_frames": 115,
+      "pool_seconds": 3.83,
+      "cards": [
+        "SD UHS-II",
+        "CFe Type B",
+        "CFe B top"
+      ],
+      "verdict": "CLEAR"
+    },
+    {
+      "name": "DX 14-bit full-DX ceiling",
+      "readout_px": 10328064,
+      "out": "DXL",
+      "fps": 23.56,
+      "fmt": "RAW 14bit",
+      "bit": 14,
+      "mps": 243.4,
+      "line": 243.37,
+      "mb_frame": 20.7,
+      "mb_s": 487.8,
+      "pool_frames": 28,
+      "pool_seconds": 1.19,
+      "cards": [
+        "CFe B top"
+      ],
+      "verdict": "ceiling"
+    }
+  ]
+}

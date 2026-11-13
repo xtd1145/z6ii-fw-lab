@@ -1,0 +1,188 @@
+<div id="k8report" style="font-family:'Segoe UI',system-ui,sans-serif;background:#0d1117;color:#e6edf3;border-radius:14px;padding:22px;max-width:1180px;margin:0 auto;border:1px solid #21262d">
+  <style>
+    #k8report h1{font-size:21px;margin:0 0 4px}
+    #k8report h2{font-size:15px;margin:22px 0 10px;color:#79c0ff;border-left:3px solid #388bfd;padding-left:9px}
+    #k8report .sub{color:#8b949e;font-size:13px;margin-bottom:16px}
+    #k8report .tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+    #k8report .tab{padding:7px 14px;border-radius:8px;background:#161b22;border:1px solid #30363d;color:#8b949e;cursor:pointer;font-size:13px}
+    #k8report .tab.on{background:#1f6feb;color:#fff;border-color:#1f6feb}
+    #k8report .pane{display:none}
+    #k8report .pane.on{display:block}
+    #k8report .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:11px}
+    #k8report .card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:13px}
+    #k8report .k{font-size:24px;font-weight:600;font-family:ui-monospace,Consolas,monospace}
+    #k8report .l{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+    #k8report table{width:100%;border-collapse:collapse;font-size:12.5px}
+    #k8report th{text-align:left;padding:8px 9px;color:#8b949e;border-bottom:1px solid #30363d;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+    #k8report td{padding:8px 9px;border-bottom:1px solid #1c2128;vertical-align:top}
+    #k8report code,.mono{font-family:ui-monospace,Consolas,monospace}
+    #k8report .no{color:#f85149;font-weight:600}
+    #k8report .ok{color:#3fb950;font-weight:600}
+    #k8report .warn{color:#d29922;font-weight:600}
+    #k8report .bar{height:9px;background:#21262d;border-radius:5px;overflow:hidden}
+    #k8report .bar i{display:block;height:100%;background:linear-gradient(90deg,#488fdd,#1f6feb)}
+    #k8report .chain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+    #k8report .node{background:#161b22;border:1px solid #30363d;border-radius:9px;padding:9px 12px;font-size:12px}
+    #k8report .node b{display:block;font-size:12.5px;margin-bottom:2px}
+    #k8report .node.dead{border-color:#f85149;background:#2a1315}
+    #k8report .node.live{border-color:#3fb950;background:#12261c}
+    #k8report .arrow{color:#8b949e;font-size:16px}
+    #k8report .step{display:flex;gap:12px;margin-bottom:11px}
+    #k8report .n{flex:0 0 24px;height:24px;border-radius:50%;background:#1f6feb;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+    #k8report .n.g{background:#3fb950}#k8report .n.r{background:#f85149}
+    #k8report .t{font-size:13px}#k8report .d{font-size:12px;color:#8b949e;margin-top:2px}
+    #k8report .hl{background:#161b22;border:1px solid #388bfd;border-radius:10px;padding:14px;margin:12px 0}
+    #k8report .hl.risk{border-color:#d29922}
+    #k8report ul{margin:6px 0;padding-left:19px;font-size:12.5px;line-height:1.65}
+  </style>
+
+  <h1>尼康 Z6 II（Z6_2_0170）K8 签名密钥 · 破解进程报告</h1>
+  <div class="sub">离线静态分析 · 原始固件未修改 · 目标：恢复 8 字节 K8 以重新签名</div>
+
+  <div class="tabs">
+    <div class="tab on" data-p="p1">1. 破解时间线</div>
+    <div class="tab" data-p="p2">2. 排除矩阵</div>
+    <div class="tab" data-p="p3">3. 机制与代码证据</div>
+    <div class="tab" data-p="p4">4. 结论与路径</div>
+  </div>
+
+  <div class="pane on" id="p1">
+    <div class="grid">
+      <div class="card"><div class="k no">未恢复</div><div class="l">K8 静态求解结果</div></div>
+      <div class="card"><div class="k">≈ 3.2 亿</div><div class="l">已测 K8 候选总数</div></div>
+      <div class="card"><div class="k ok">6 / 6</div><div class="l">模块+包 CRC 全部通过</div></div>
+      <div class="card"><div class="k ok">已证</div><div class="l">包 CRC 免改不变量</div></div>
+    </div>
+
+    <h2>本轮（继续破解）做了什么</h2>
+    <div class="step"><div class="n r">1</div><div><div class="t">字典种子搜索结束：1,966 个种子 × 131,072 组 keystream</div><div class="d">结果 <b class="no">hit None</b>（663 秒）。覆盖了型号串、版本、模块名、A/B 表常量、SHA1 IV 字、以及 wrapper/transform/SHA1 库各区域的 8 字节窗口。</div></div></div>
+    <div class="step"><div class="n">2</div><div><div class="t">重读 transform1 反汇编，纠正一个关键误解</div><div class="d"><code>uxtab r0,r1,r8</code> 是 <b>Unrotate <u>and Add</u> Byte</b>（Rd = Rn + ZeroExtend(Rm)），不是截断指针 → 索引 <code>acc &amp; 0xFF</code>。确认 Z6 II 静态 <code>a=0, b=0</code> → K8 退化为种子原值。</div></div></div>
+    <div class="step"><div class="n">3</div><div><div class="t">穷举所有运行时 (a,b) 组合，而不是只信静态值</div><div class="d">4 个种子 × 256×256 (a,b) × 2 multiplier = <b>524,288</b> 个 K8 → <b class="no">全部不符</b>。即使表查找在运行时取任意值，这条路也走不通。</div></div></div>
+    <div class="step"><div class="n">4</div><div><div class="t">修好 Thumb-2 BL 解码器，枚举校验器全部装配点</div><div class="d">位判定应为 <code>hw2 &amp; 0xD400 == 0xD000</code>（此前多加 bit10 约束导致 0 命中）。结果：<b>set_key / set_func / set_data / set_digest / verify 在整个 mas 各自只有 1 个调用点</b>，全在 <code>0x1037ea40</code>。不存在"另一个用真种子的 wrapper"。ARM 段与字面量引用同样 0 命中。</div></div></div>
+    <div class="step"><div class="n">5</div><div><div class="t">确认没有任何代码写入 A/B 表</div><div class="d"><code>0x12078c96 / 0x12078d96 / 0x12078f96</code> 的字面量引用各只有 1 处，且都在 transform 内部 → <code>a=b=0</code> 是确定的运行值，不是"运行时被灌密钥"。</div></div></div>
+    <div class="step"><div class="n">6</div><div><div class="t">跨机型对照：那个"种子槽"根本不是密钥槽</div><div class="d">Z6 II / Z7 II / Z6 / Z50 的 eg 模块 <code>+0x88</code> <b>完全相同</b> = <code>00 23 00 24 00 25 00 26</code>（= <code>movs r3,#0; movs r4,#0; movs r5,#0; movs r6,#0</code>）。Z8（EXPEED7）该位置是 ARM64 指令，其 seed 是真字面量 <code>138c3f279ade6b59</code>。</div></div></div>
+    <div class="step"><div class="n g">7</div><div><div class="t">端到端复验容器完整性</div><div class="d">5 个模块 CRC + 包 CRC 全部 OK；同时打印 mas 静态 K8 的摘要 = <code>2ce4bf38…</code>，官方头摘要 = <code>89019167…</code> → 不符。</div></div></div>
+    <div class="step"><div class="n g">8</div><div><div class="t">实证"包 CRC 免改"不变量</div><div class="d">在 mas payload 中翻转 1 字节、只重算模块 CRC → 包 CRC 仍为 <code>cf9a</code>。这是不需要 K8 就能保持自洽的通路。</div></div></div>
+  </div>
+
+  <div class="pane" id="p2">
+    <h2>已系统性排除的假设（按可信度全部为否）</h2>
+    <table>
+      <tr><th>假设</th><th>搜索空间</th><th>结果</th><th style="width:24%">规模</th></tr>
+      <tr><td>K8 作为 8 字节窗口存在于解密容器内</td><td class="mono">49,002,873 窗口（stride 1）</td><td class="no">0 命中</td><td><div class="bar"><i style="width:100%"></i></div></td></tr>
+      <tr><td>K8 存在于某个独立模块内</td><td>mas / sla / ex / vr / tpj 各全扫</td><td class="no">0 命中</td><td><div class="bar"><i style="width:78%"></i></div></td></tr>
+      <tr><td>K8 = 种子 ⊕ keystream(a,b,M)，a/b 为任意运行值</td><td class="mono">524,288</td><td class="no">0 命中</td><td><div class="bar"><i style="width:38%"></i></div></td></tr>
+      <tr><td>Z8 法：SHA1 IV 前 24 字节为 seed</td><td>Z6 II / Z7 II / Z6 / Z50 × 131,072</td><td class="no">0 命中</td><td><div class="bar"><i style="width:20%"></i></div></td></tr>
+      <tr><td>种子由指令立即数/常量/型号串拼成</td><td class="mono">1,966 种子 × 131,072</td><td class="no">0 命中</td><td><div class="bar"><i style="width:96%"></i></div></td></tr>
+      <tr><td>哈希范围假设错误（起止偏移）</td><td class="mono">6 起点 × 5 终点 × 131,072</td><td class="no">0 命中</td><td><div class="bar"><i style="width:60%"></i></div></td></tr>
+      <tr><td>存在第二个校验装配点（含 ARM 模式）</td><td>45,255 个 ARM BL/BLX + 全字面量池</td><td class="no">0 命中</td><td><div class="bar"><i style="width:14%"></i></div></td></tr>
+      <tr><td>A/B 表运行时被写入密钥</td><td>3 个表地址的全部引用</td><td class="no">无写入者</td><td><div class="bar"><i style="width:6%"></i></div></td></tr>
+    </table>
+
+    <h2>为什么不能再靠算</h2>
+    <div class="hl">
+      <div style="font-size:13px;line-height:1.7">
+        <div><span class="mono warn">|body| = 0x2ebb968 = 49,002,856 ≡ 56 (mod 64)</span></div>
+        <div style="margin-top:6px">追加 8 字节 K8 后<b>正好填满一个 SHA-1 分组</b>，填充块固定。于是未知量恰好是消息调度中的 <span class="mono">W[14], W[15]</span> —— <b>整整 64 bit 独立空间</b>。</div>
+        <div style="margin-top:6px">SHA-1 压缩函数不可逆，且后向轮次 <span class="mono">W[17..79]</span> 同样依赖这两个字 → 无法用中途相遇把 2<sup>64</sup> 拆开。<b>纯算力穷举 K8 不可行</b>；只能靠"派生逻辑"，而派生逻辑已在上表中被排除。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pane" id="p3">
+    <h2>签名链（代码级证据）</h2>
+    <div class="chain">
+      <div class="node live"><b>头部 20 字节</b>摘要</div><div class="arrow">←</div>
+      <div class="node live"><b>SHA-1(body ‖ K8)</b>0x392286 verify</div><div class="arrow">←</div>
+      <div class="node dead"><b>K8 (8 字节)</b>memcpy @0x33d254</div>
+    </div>
+    <div class="chain">
+      <div class="node dead"><b>K8 = 种子 ⊕ keystream</b>transform1 @0x39ea3c</div><div class="arrow">←</div>
+      <div class="node"><b>种子</b>[0x10000088] = <span class="mono">0023002400250026</span></div><div class="arrow">+</div>
+      <div class="node"><b>b</b> = A[0x48] = <span class="mono">0</span></div><div class="arrow">+</div>
+      <div class="node"><b>a</b> = B[0x14] = <span class="mono">0</span></div>
+    </div>
+
+    <h2>已完全还原的校验装配（mas 唯一入口 0x1037ea40）</h2>
+    <table>
+      <tr><th>步骤</th><th>地址</th><th>作用</th></tr>
+      <tr><td>set_data</td><td class="mono">0x39112e</td><td>ctx[0]=image+0x20，ctx[4]=size−0x20（即整个解密 body）</td></tr>
+      <tr><td>set_func</td><td class="mono">0x391128</td><td>ctx[8] = 0x1039ea3d → transform1（keystream）</td></tr>
+      <tr><td>set_key</td><td class="mono">0x391142</td><td>memcpy(ctx+0xc, <b>0x10000088</b>, 8)；param=<b>0x44c</b>；model=<b>"Z_6_2"</b></td></tr>
+      <tr><td>set_digest</td><td class="mono">0x391136</td><td>存入 image[0:20] 作为期望摘要</td></tr>
+      <tr><td>verify</td><td class="mono">0x392286</td><td><span class="mono">rev(~param)</span> → transform1 原地把种子变成 K8 → 把 K8 追加到 body 尾 → SHA-1 → memcmp 20 字节</td></tr>
+    </table>
+    <div class="d" style="margin-top:8px;font-size:12px;color:#8b949e">注意 <code>rev(~param)</code> 不改变 4 字节异或值 → 索引恒为 <code>0x48</code>；"Z_6_2" 的累加器 <code>0,5,56,565,5652</code> → <code>&amp;0xFF = 0x14</code>。两者查表都得 0。</div>
+
+    <h2>Z8（已破）vs Z6 II（边界）</h2>
+    <table>
+      <tr><th></th><th>Z8 · EXPEED7</th><th>Z6 II · EXPEED6</th></tr>
+      <tr><td>seed 形式</td><td class="ok">真 8 字节字面量 <span class="mono">138c3f279ade6b59</span>（SHA1 IV − 24）</td><td class="no">指向模块 <code>+0x88</code> 的指令块，立即数全 0</td></tr>
+      <tr><td>keystream</td><td class="mono">a=0x7f, b=0xdf, M=0x260 → 完全复现</td><td class="mono">a=0, b=0 → 退化为种子原值</td></tr>
+      <tr><td>K8</td><td class="ok"><span class="mono">6c12037e6fcec19a</span> 已验证</td><td class="no">无法从本镜像得到</td></tr>
+      <tr><td>摘要复现</td><td class="ok">SHA1(body‖K8) == 头部</td><td class="no">SHA1(body‖0023002400250026) = 2ce4bf38… ≠ 89019167…</td></tr>
+    </table>
+
+    <div class="hl">
+      <b style="color:#79c0ff">最关键的推论（反向证据）</b>
+      <ul>
+        <li>原厂包<b>必须</b>能通过相机自身的校验，否则连官方升级都完不成。</li>
+        <li>但 mas 里唯一的 SHA-1 校验器算出的 K8 <b>复现不了</b>官方摘要。</li>
+        <li>⇒ SD 卡升级路径<b>没有</b>走这个头部摘要校验；代码结构与之吻合：gate <span class="mono">0x37ff28</span> 仅在 <span class="mono">state[0] == 2 或 4</span> 时才返回校验上下文，其余类型走 <span class="mono">0x37e886</span> 的 <b>纯 CRC16</b> 分支。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="pane" id="p4">
+    <h2>结论</h2>
+    <div class="grid">
+      <div class="card"><div class="k no">静态不可恢复</div><div class="l">仅凭这一个 .bin 得到 K8</div></div>
+      <div class="card"><div class="k ok">无需 K8 即可自洽</div><div class="l">等长 payload 补丁</div></div>
+      <div class="card"><div class="k warn">唯一残留风险</div><div class="l">校验者可能在镜像外</div></div>
+    </div>
+
+    <h2>三条可选路径</h2>
+    <div class="hl">
+      <b style="color:#3fb950">路径 A（推荐）· 只用已证不变量做等长补丁</b>
+      <div class="d" style="margin-top:6px;font-size:12.5px">
+        改动模块 payload（长度不变）→ 重算该模块 CRC16 → <b>包 CRC 自动保持 <span class="mono">cf9a</span></b>（本轮已实证）。
+        头部 20 字节摘要<b>不再自洽</b>，但按上面的反向推论，SD 卡路径本就不校验它。风险：若相机在 boot ROM / ExMCU 层用镜像外的 K8 校验，则会被拒。
+      </div>
+    </div>
+    <div class="hl risk">
+      <b style="color:#d29922">路径 B · 需要额外输入才能真拿到 K8</b>
+      <div class="d" style="margin-top:6px;font-size:12.5px">
+        三选一：① 相机运行内存转储（读 ctx 块 <span class="mono">0xc2b2b608</span> 的 +0xc..0x13，K8 就在里面）；
+        ② Nikon 服务/工厂工具或其签名流程；
+        ③ 一个已知"改过并被接受"的同机型包，可反查其 K8 是否恒定。<br>
+        这些都需要镜像之外的材料，不属于当前离线授权范围。
+      </div>
+    </div>
+    <div class="hl">
+      <b style="color:#79c0ff">路径 C · 继续静态但换目标</b>
+      <div class="d" style="margin-top:6px;font-size:12.5px">
+        转向确认"到底哪个分支在校验"：静态定位 scanner 的 type 判定与文件名模式来源（其 pattern 全局 <span class="mono">0xc25d865c</span> 是 VMA，需先解出 .data 的 LMA 映射）。
+        这条能把路径 A 的"推论"升级为"确证"，但不能产出 K8。
+      </div>
+    </div>
+
+    <h2>约束遵守情况</h2>
+    <ul>
+      <li class="ok">未修改 <span class="mono">Z6_2_0170.bin</span> 原始文件（只读）。</li>
+      <li class="ok">未生成、未写入、未尝试刷入任何固件到相机。</li>
+      <li class="ok">全部为本地反汇编与哈希/CRC 计算。</li>
+    </ul>
+  </div>
+</div>
+<script>
+(function(){
+  var r=document.getElementById('k8report');
+  r.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click',function(){
+      r.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on')});
+      r.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});
+      t.classList.add('on');r.querySelector('#'+t.dataset.p).classList.add('on');
+    });
+  });
+})();
+</script>

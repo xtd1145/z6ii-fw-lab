@@ -1,0 +1,15 @@
+{
+  "K8": "6c12037e6fcec19a",
+  "a": 127,
+  "b": 223,
+  "multiplier": 608,
+  "seed": "138c3f279ade6b59",
+  "seed_offset": 78349540,
+  "model": "Z 8",
+  "scheme": "legacy-sha1-suffix",
+  "signature": "header[0:20] == SHA1(decrypt(image)[0x20:] || K8)",
+  "sources": [
+    "Z_8_0311.bin"
+  ],
+  "self_check": "64f1bb432c931b143e4a6404ba8c779ca3f37151244ada9ae8534ce9c9ba4f3e"
+}
