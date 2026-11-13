@@ -1,16 +1,19 @@
-# QEMU 改动（NikON Z6 II 实验室机器）
+# QEMU 改动（Nikon Z6 II 实验室机器）
 
 本目录是我们对上游 QEMU 的全部改动，供在干净源码树上复现。
 
 - 上游版本：**QEMU 11.1.2**
-- 改动范围：`hw/arm/nikon-*.c` / `*.h`（36 个文件）
+- 内容：
+  - `hw/arm/nikon-*.c` / `*.h` —— 机器与设备模型
+  - `hw/arm/Kconfig`、`hw/arm/meson.build` —— 注册机器类型与源文件
+  - `system/memory.c`、`system/physmem.c` —— 内存/物理地址空间的配套改动
 
 ## 应用方式
 
 1. 取 QEMU 11.1.2 源码树。
-2. 把 `hw/arm/` 下的 `nikon-*` 文件拷到源码的 `hw/arm/`。
-3. 在 `hw/arm/meson.build` 的 `arm_ss` 源文件列表里加入这些条目（见 `meson-entries.txt`）。
-4. 按常规配置构建 `qemu-system-arm`。
+2. 把本目录的 `hw/` 与 `system/` 覆盖到源码对应位置（`cp -r qemu-patches/hw qemu-patches/system <qemu-src>/`）。
+3. 按常规配置构建 `qemu-system-arm`。
+4. `meson-entries.txt` 记录了 `hw/arm/meson.build` 里新增的源文件条目，便于核对。
 
 ## 机器类型
 

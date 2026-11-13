@@ -50,17 +50,10 @@ work/qemu_build/run/
 **/*.bin
 
 # ---- 仓库只收「我们写的」，不收上游源码与工具链 ----
-# QEMU 源码树整体排除，只放行 hw/arm 下的 nikon-* 改动
-tools/*
-!tools/src/
-tools/src/*
-!tools/src/qemu/
-tools/src/qemu/*
-!tools/src/qemu/hw/
-tools/src/qemu/hw/*
-!tools/src/qemu/hw/arm/
-tools/src/qemu/hw/arm/*
-!tools/src/qemu/hw/arm/nikon-*
+# QEMU 源码树整体排除；我们的改动已导出到 qemu-patches/。
+# 不要用 !tools/... 白名单：它会让 git add -A 把内嵌仓库当成 gitlink 收进来。
+tools/
+nikon-z62-qemu/
 
 # work 下只保留探针脚本，其余为实验数据
 work/*
