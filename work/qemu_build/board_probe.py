@@ -175,6 +175,8 @@ def main():
     ap.add_argument("--menu-hold", type=float, default=0.2,
                     help="seconds the MENU key stays held")
     ap.add_argument("--log", default="", help="QEMU -d categories")
+    ap.add_argument("--dfilter", default="",
+                    help="QEMU -dfilter range (limits -d exec to given PCs)")
     ap.add_argument("--pc", action="store_true", help="dump every core's PC at each shot")
     ap.add_argument("--trace", default="", help="QEMU -D log file")
     ap.add_argument("--icount-shift", type=int, default=None,
@@ -244,6 +246,8 @@ def main():
         ):
             cmd += ["-global", prop]
 
+    if args.dfilter:
+        cmd += ["-dfilter", args.dfilter]
     if args.log:
         cmd += ["-d", args.log]
         cmd += ["-D", os.path.abspath(args.trace)]
