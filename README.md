@@ -56,4 +56,12 @@ python z62_webui/console.py --port 8642
 - 补丁包：29 个 master/容器逐包启动 **18 通过**，明细见 `PATCH_TESTS.md`
   与 `results/variants_try.json`；预拍摄钩子包（`54ed5f2c`）可启动并出 HUD。
 - 菜单模型：文案实时取自 mas 的 UTF-16 字符串区；运行期菜单在打开时整体重建。
+- HookPack（预拍摄/连拍保守取证）：`work/hookpack/`，产物
+  `dist/hookpack/Z6_2_0170_hookpack.bin`；17 个只读钩点、固定 DRAM 状态块、
+  PICCON 分页导出，设计与判读见 `work/hookpack/HOOKPACK.md`。
+- HookPack + PTP 读取：`work/ptpread/`，产物
+  `dist/ptpread/Z6_2_0170_hookpack_ptp.bin` 与 `_nor.bin`。在 HookPack 上合并
+  combo45 的 `0xF032` 读取通道（3 处编辑 / 44 B，与原包逐字节一致），刷入后
+  插 USB 用 `ptp_read.py read` 一次事务读回 `0xC5EFF000 + 0xD00`，不用调试器、
+  不保存 Picture Control、不黑屏。说明见 `work/ptpread/PTP_READ.md`。
 - 仅用于自有设备的互操作与固件研究实验。

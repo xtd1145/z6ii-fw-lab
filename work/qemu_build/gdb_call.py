@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import board_probe as bp
 import cap_read_probe as cr
 
-TRAP = 0x104A9680          # ordinary dispatcher entry; only used as a return landing pad
+TRAP = 0x104C9680          # dispatcher entry (image base 0x10020000, not 0x10000000)
 
 
 def regs_of(rsp):
@@ -57,6 +57,8 @@ def main():
     ap.add_argument("--aux", default="")
     ap.add_argument("--extra", default="")
     ap.add_argument("--master", default="")
+    ap.add_argument("--stop-at-func", action="store_true",
+                    help="break at the callee entry to prove the jump landed")
     ap.add_argument("--selftest", action="store_true",
                     help="write the register block back unchanged and compare")
     args = ap.parse_args()
@@ -131,6 +133,9 @@ def main():
 
         trap = rsp.cmd("Z0,%x,2" % TRAP)
         print("trap at 0x%08x -> %r" % (TRAP, trap))
+        if args.stop_at_func:
+            r = rsp.cmd("Z0,%x,2" % (args.func & ~1))
+            print("entry bp at 0x%08x -> %r" % (args.func & ~1, r))
 
         regs = list(saved)
         regs[0] = args.arg
@@ -160,12 +165,27 @@ def main():
         rsp.send_only("c")
 
         hit = False
+        landed = None
         end = time.time() + 6.0
         while time.time() < end:
             pkt = rsp._read_packet(0.5)
             if pkt is None:
                 continue
             if pkt.startswith(("T", "S")):
+                if args.stop_at_func and landed is None:
+                    snap = regs_of(rsp)
+                    landed = snap[15] if snap else None
+                    ok = landed is not None and (landed & ~1) == (args.func & ~1)
+                    if snap:
+                        print("  first stop at 0x%08x -> %s  lr=%08x sp=%08x r0=%08x" %
+                              (landed or 0,
+                               "ENTRY REACHED" if ok else "NOT THE ENTRY",
+                               snap[14], snap[13], snap[0]))
+                    else:
+                        print("  first stop, registers unreadable")
+                    rsp.cmd("z0,%x,2" % (args.func & ~1))
+                    rsp.send_only("c")
+                    continue
                 hit = True
                 break
         if not hit:
