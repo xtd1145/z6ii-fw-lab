@@ -56,6 +56,9 @@ def main():
     ap.add_argument("--aux", default="")
     ap.add_argument("--extra", default="")
     ap.add_argument("--out", default="run/ram")
+    ap.add_argument("--cpu", type=int, default=None,
+                    help="select a CPU before dumping (xp then walks that "
+                         "CPU's address space; the slave engine has its own)")
     ap.add_argument("--regions", default="0x10000000:0x00140000")
     ap.add_argument("--pmemsave", action="store_true",
                     help="use pmemsave (system_memory only, misses engine views)")
@@ -98,11 +101,14 @@ def main():
                      % (configs[0], level))
         while time.time() - t0 < args.at:
             time.sleep(0.4)
+        if args.cpu is not None:
+            print("select cpu %d -> %s" % (args.cpu, hmp.cmd("cpu %d" % args.cpu).strip()))
         for spec in [s for s in args.regions.split(",") if s]:
             addr, size = spec.split(":")
             addr = int(addr, 0)
             size = int(size, 0)
-            name = "ram_%08x_%08x.bin" % (addr, size)
+            name = "ram_%08x_%08x%s.bin" % (
+                addr, size, "" if args.cpu is None else "_cpu%d" % args.cpu)
             path = os.path.join(args.out, name)
             if args.pmemsave:
                 print("pmemsave 0x%08x 0x%08x -> %s" % (addr, size, name))

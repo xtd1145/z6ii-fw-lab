@@ -157,6 +157,15 @@ def main():
                     help="override master-boot-image= with another MAIN "
                          "module (e.g. a patched combo build)")
     ap.add_argument("--sd", default="", help="raw SD image to attach")
+    ap.add_argument("--no-cpu-loader", action="store_true",
+                    help="drop -device loader,addr=... entries so the reset PC "
+                         "comes from the boot store (native NOR boot)")
+    ap.add_argument("--no-preload", action="store_true",
+                    help="strip boot image/aux preloads from -M (native NOR boot)")
+    ap.add_argument("--machine-extra", default="",
+                    help="text appended to the -M machine string")
+    ap.add_argument("--nor", default="",
+                    help="raw parallel-NOR dump for pflash (native-nor-boot)")
     ap.add_argument("--sd-write", action="store_true",
                     help="attach the SD image without snapshot=on, so guest "
                          "writes reach the file (needed to prove card writes)")
@@ -190,6 +199,24 @@ def main():
 
     cmd = [c for c in json.load(open(CMD))]
     cmd[0] = QEMU
+    if args.no_cpu_loader:
+        out = []
+        i = 0
+        while i < len(cmd):
+            if cmd[i] == "-device" and i + 1 < len(cmd) and \
+                    cmd[i + 1].startswith("loader,addr="):
+                i += 2
+                continue
+            out.append(cmd[i])
+            i += 1
+        cmd = out
+    if args.no_preload:
+        cmd[2] = re.sub(r",master-boot-aux=.*?(?=,controller-flash-data=)",
+                        "", cmd[2])
+        cmd[2] = re.sub(r",(master|slave)-boot-image=[^,]*", "", cmd[2])
+        cmd[2] = re.sub(r",+", ",", cmd[2])
+    if args.machine_extra:
+        cmd[2] = cmd[2] + args.machine_extra
     if args.master:
         for i, part in enumerate(cmd):
             if "master-boot-image=" in part:
@@ -223,6 +250,9 @@ def main():
                           % (os.path.abspath(args.sd), snap),
                 "-device", "sd-card,drive=z62-card,bus=/z72-sd-slave/sd-bus"]
 
+    if args.nor:
+        cmd += ["-drive", "if=pflash,format=raw,snapshot=on,file=%s"
+                          % os.path.abspath(args.nor)]
     if not args.no_uart:
         cmd += ["-chardev", "file,id=z72-console,path=" + os.path.abspath(os.path.join(ROOT, args.console)),
                 "-global", "nikon-z72-uart.enabled=on"]

@@ -147,6 +147,14 @@ def main():
             if pkt is None:
                 continue
             if pkt.startswith(("T", "S")):
+                if len(hits) == 1:
+                    print("  stop packet:", pkt[:60])
+                m = re.search(r"thread:p([0-9a-fA-F]+)\.([0-9a-fA-F]+)", pkt)
+                if m:
+                    who = "cpu%d" % int(m.group(2), 16)
+                else:
+                    m = re.search(r"core:([0-9a-fA-F]+)", pkt)
+                    who = ("cpu%d" % int(m.group(1), 16)) if m else "cpu?"
                 pc = decode_pc(rsp)
                 hits.append(pc)
                 if args.gpio_scan and scan_i:
@@ -155,8 +163,8 @@ def main():
                     tag = "key%d" % keys[key_i - 1]
                 else:
                     tag = "-"
-                print("  hit #%d at 0x%08x (t=%.1fs, after %s)" %
-                      (len(hits), pc or 0, time.time() - t0, tag))
+                print("  hit #%d at 0x%08x (%s, t=%.1fs, after %s)" %
+                      (len(hits), pc or 0, who, time.time() - t0, tag))
                 rsp.dump_frame("callframe")
                 rsp.send_only("c")
         print("\n=== %d hits in %.0fs ===" % (len(hits), args.stop))

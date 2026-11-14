@@ -704,6 +704,11 @@ struct NikonZ72BootConfig {
     uint64_t idmac_kick_cpu[4];
     uint64_t idmac_read_cpu[4];
     bool idmac_trace;
+    /* Laboratory: log every write into the 0x2000_0000 register window with
+     * value and PC. A buffer/descriptor handoff shows up here as a value in
+     * the 0x8000_0000 / 0xc000_0000 range; guessing individual IDMAC offsets
+     * has repeatedly missed it. */
+    bool regwrite_trace;
     bool capture_done_trace;
     uint64_t capture_done_reads;
     unsigned capture_done_log;
@@ -1497,6 +1502,14 @@ static void boot_config_write(void *opaque, hwaddr offset,
      * record every write during an IDMAC trace run - if the firmware hands
      * 0x80800000 to this block instead of the IDMAC engine, that is the
      * producer the capture path is missing. */
+    if (s->regwrite_trace &&
+        ((address >= 0x20000000 && address < 0x21000000) ||
+         (uint32_t)value >= 0x10000000)) {
+        fprintf(stderr, "Z62_REG wr %08" HWADDR_PRIx "=%08x pc=%08x cpu=%u\n",
+                address, (uint32_t)value,
+                current_cpu ? ARM_CPU(current_cpu)->env.regs[15] : 0,
+                current_cpu ? (unsigned)current_cpu->cpu_index : 0);
+    }
     if (s->idmac_trace && address >= 0x20068000 && address < 0x20068150) {
         fprintf(stderr, "Z62_ISPIN wr %08" HWADDR_PRIx "=%08x pc=%08x\n",
                 address, (uint32_t)value,
@@ -3118,7 +3131,9 @@ static void boot_config_realize(DeviceState *dev, Error **errp)
                 return;
             }
             DeviceState *flash = qdev_new("cfi.pflash02");
-            qdev_prop_set_uint32(flash, "num-blocks", 512);
+            /* MT28FW01GABA1L is 1 Gbit: 1024 x 128 KiB = 128 MiB. The
+             * earlier 512-block geometry rejected a real dump. */
+            qdev_prop_set_uint32(flash, "num-blocks", 1024);
             qdev_prop_set_uint32(flash, "sector-length", 0x20000);
             qdev_prop_set_uint8(flash, "width", 2);
             qdev_prop_set_uint8(flash, "mappings", 1);
@@ -3406,6 +3421,8 @@ static void boot_config_class_init(ObjectClass *oc, const void *data)
         DEFINE_PROP_BOOL("gate-ack-starve", NikonZ72BootConfig,
                          gate_ack_starve, false),
         DEFINE_PROP_BOOL("idmac-trace", NikonZ72BootConfig, idmac_trace,
+                         false),
+        DEFINE_PROP_BOOL("regwrite-trace", NikonZ72BootConfig, regwrite_trace,
                          false),
         DEFINE_PROP_BOOL("capture-done-trace", NikonZ72BootConfig,
                          capture_done_trace, false),

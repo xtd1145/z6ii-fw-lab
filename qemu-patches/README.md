@@ -7,6 +7,9 @@
   - `hw/arm/nikon-*.c` / `*.h` —— 机器与设备模型
   - `hw/arm/Kconfig`、`hw/arm/meson.build` —— 注册机器类型与源文件
   - `system/memory.c`、`system/physmem.c` —— 内存/物理地址空间的配套改动
+  - `gdbstub/gdbstub.c` —— 断点/观察点改为下到**所有**核（上游只装 `c_cpu`）。
+    四核机器上原先只有 cpu0 能命中，任何"0 命中"都不成立；
+    改动是 `gdb_bp_all_cpus()` 遍历 `CPU_FOREACH`，并在 `?` 查询时清全部核。
 
 ## 应用方式
 
